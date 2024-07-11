@@ -187,6 +187,8 @@ void ChassisInit()
 static void SteeringWheelCalculate()
 {
     float offset_lf, offset_rf, offset_lb, offset_rb;
+    float at_lf_last, at_rf_last, at_lb_last, at_rb_last;
+    at_lb_last = at_lb, at_lf_last = at_lf, at_rf_last = at_rf, at_rb_last = at_rb;
     arm_sqrt_f32(powf(chassis_vx - chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2, 2) + powf(chassis_vy - chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2, 2), &vt_lf);
     arm_sqrt_f32(powf(chassis_vx - chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2, 2) + powf(chassis_vy + chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2, 2), &vt_rf);
     arm_sqrt_f32(powf(chassis_vx + chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2, 2) + powf(chassis_vy + chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2, 2), &vt_lb);
@@ -195,10 +197,19 @@ static void SteeringWheelCalculate()
     offset_rf = atan2f(chassis_vy + chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2, chassis_vx - chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2) * RAD_2_DEGREE;
     offset_lb = atan2f(chassis_vy + chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2, chassis_vx + chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2) * RAD_2_DEGREE;
     offset_rb = atan2f(chassis_vy - chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2, chassis_vx + chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2) * RAD_2_DEGREE;
-    // at_lf     = motor_steering_lf->measure.total_angle - STEERING_CHASSIS_ALIGN_ANGLE_LF - offset_lf;
-    // at_rf     = motor_steering_rf->measure.total_angle - STEERING_CHASSIS_ALIGN_ANGLE_RF - offset_rf;
-    // at_lb     = motor_steering_lb->measure.total_angle - STEERING_CHASSIS_ALIGN_ANGLE_LB - offset_lb;
-    // at_rb     = motor_steering_rb->measure.total_angle - STEERING_CHASSIS_ALIGN_ANGLE_RB - offset_rb;
+    at_lf     = STEERING_CHASSIS_ALIGN_ANGLE_LF - offset_lf; // 此处似乎不需要加上真实角度，因为我们需要的是绝对角度而不是相对角度
+    at_rf     = STEERING_CHASSIS_ALIGN_ANGLE_RF - offset_rf;
+    at_lb     = STEERING_CHASSIS_ALIGN_ANGLE_LB - offset_lb;
+    at_rb     = STEERING_CHASSIS_ALIGN_ANGLE_RB - offset_rb;
+    if (!offset_lf) at_lf = at_lf_last;
+    if (!offset_rf) at_rf = at_rf_last;
+    if (!offset_lb) at_lb = at_lb_last;
+    if (!offset_rb) at_rb = at_rb_last;
+
+    DJIMotorSetRef(motor_steering_lf, at_lf);
+    DJIMotorSetRef(motor_steering_rf, at_rf);
+    DJIMotorSetRef(motor_steering_lb, at_lb);
+    DJIMotorSetRef(motor_steering_rb, at_rb);
 }
 
 /**
@@ -298,11 +309,19 @@ void ChassisTask()
         DJIMotorStop(motor_rf);
         DJIMotorStop(motor_lb);
         DJIMotorStop(motor_rb);
+        DJIMotorStop(motor_steering_lf);
+        DJIMotorStop(motor_steering_rf);
+        DJIMotorStop(motor_steering_lb);
+        DJIMotorStop(motor_steering_rb);
     } else { // 正常工作
         DJIMotorEnable(motor_lf);
         DJIMotorEnable(motor_rf);
         DJIMotorEnable(motor_lb);
         DJIMotorEnable(motor_rb);
+        DJIMotorEnable(motor_steering_lf);
+        DJIMotorEnable(motor_steering_rf);
+        DJIMotorEnable(motor_steering_lb);
+        DJIMotorEnable(motor_steering_rb);
     }
 
     // 根据控制模式设定旋转速度
@@ -325,6 +344,7 @@ void ChassisTask()
     chassis_vy = chassis_cmd_recv.vx * sin_theta + chassis_cmd_recv.vy * cos_theta;
 
     // 根据控制模式进行正运动学解算,计算底盘输出
+    SteeringWheelCalculate();
     MecanumCalculate();
 
     // 根据裁判系统的反馈数据和电容数据对输出限幅并设定闭环参考值
