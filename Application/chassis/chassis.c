@@ -193,14 +193,14 @@ static void SteeringWheelCalculate()
     arm_sqrt_f32(powf(chassis_vx - chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2, 2) + powf(chassis_vy + chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2, 2), &vt_rf);
     arm_sqrt_f32(powf(chassis_vx + chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2, 2) + powf(chassis_vy + chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2, 2), &vt_lb);
     arm_sqrt_f32(powf(chassis_vx + chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2, 2) + powf(chassis_vy - chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2, 2), &vt_rb);
-    offset_lf = atan2f(chassis_vy - chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2, chassis_vx - chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2) * RAD_2_DEGREE;
-    offset_rf = atan2f(chassis_vy + chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2, chassis_vx - chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2) * RAD_2_DEGREE;
-    offset_lb = atan2f(chassis_vy + chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2, chassis_vx + chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2) * RAD_2_DEGREE;
+    offset_lf = atan2f(chassis_vy + chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2, chassis_vx - chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2) * RAD_2_DEGREE;
+    offset_rf = atan2f(chassis_vy + chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2, chassis_vx + chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2) * RAD_2_DEGREE;
+    offset_lb = atan2f(chassis_vy - chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2, chassis_vx - chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2) * RAD_2_DEGREE;
     offset_rb = atan2f(chassis_vy - chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2, chassis_vx + chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2) * RAD_2_DEGREE;
-    at_lf     = STEERING_CHASSIS_ALIGN_ANGLE_LF - offset_lf; // 此处似乎不需要加上真实角度，因为我们需要的是绝对角度而不是相对角度
-    at_rf     = STEERING_CHASSIS_ALIGN_ANGLE_RF - offset_rf;
-    at_lb     = STEERING_CHASSIS_ALIGN_ANGLE_LB - offset_lb;
-    at_rb     = STEERING_CHASSIS_ALIGN_ANGLE_RB - offset_rb;
+    at_lf     = -STEERING_CHASSIS_ALIGN_ANGLE_LF - offset_lf; // 此处似乎不需要加上真实角度，因为我们需要的是绝对角度而不是相对角度
+    at_rf     = -STEERING_CHASSIS_ALIGN_ANGLE_RF - offset_rf;
+    at_lb     = -STEERING_CHASSIS_ALIGN_ANGLE_LB - offset_lb;
+    at_rb     = -STEERING_CHASSIS_ALIGN_ANGLE_RB - offset_rb;
     if (!offset_lf) at_lf = at_lf_last;
     if (!offset_rf) at_rf = at_rf_last;
     if (!offset_lb) at_lb = at_lb_last;
@@ -334,14 +334,19 @@ void ChassisTask()
             break;
     }
 
+    /* test code start in here */
+    chassis_cmd_recv.vx = 1, chassis_cmd_recv.vy = 2;
+    chassis_cmd_recv.wz           = 1;
+    chassis_cmd_recv.offset_angle = 146;
+    /* test code end in here */
+
     // 根据云台和底盘的角度offset将控制量映射到底盘坐标系上
     // 底盘逆时针旋转为角度正方向;云台命令的方向以云台指向的方向为x,采用右手系(x指向正北时y在正东)
     static float sin_theta, cos_theta;
-    cos_theta = arm_cos_f32(chassis_cmd_recv.offset_angle * DEGREE_2_RAD);
-    sin_theta = arm_sin_f32(chassis_cmd_recv.offset_angle * DEGREE_2_RAD);
-    // cos_theta = 0, sin_theta = 1;
-    chassis_vx = -chassis_cmd_recv.vx * cos_theta + chassis_cmd_recv.vy * sin_theta;
-    chassis_vy = chassis_cmd_recv.vx * sin_theta + chassis_cmd_recv.vy * cos_theta;
+    cos_theta  = arm_cos_f32(chassis_cmd_recv.offset_angle * DEGREE_2_RAD);
+    sin_theta  = arm_sin_f32(chassis_cmd_recv.offset_angle * DEGREE_2_RAD);
+    chassis_vx = chassis_cmd_recv.vx * cos_theta - chassis_cmd_recv.vy * sin_theta;
+    chassis_vy = -chassis_cmd_recv.vx * sin_theta - chassis_cmd_recv.vy * cos_theta;
 
     // 根据控制模式进行正运动学解算,计算底盘输出
     SteeringWheelCalculate();
