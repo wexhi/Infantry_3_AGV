@@ -178,13 +178,29 @@ void ChassisInit()
 #endif // ONE_BOARD
 }
 
-static void AngleLimit(float *angle)
+/**
+ * @brief 使舵电机角度最小旋转，取优弧，防止电机旋转不必要的行程
+ *          例如：上次角度为0，目标角度为135度，
+ *          电机会选择逆时针旋转至-45度，而不是顺时针旋转至135度，
+ *          两个角度都会让轮电机处于同一平行线上
+ *
+ * @param angle 目标角度
+ * @param last_angle 上次上次角度
+ * @param speed 轮电机的目标速度
+ */
+static void MinmizeRotation(float *angle, const float *last_angle, float *speed)
 {
-    if (*angle > 180) {
-        *angle -= 360;
-    } else if (*angle < -180) {
-        *angle += 360;
+    float rotation = *angle - *last_angle;
+    ANGLE_LIMIT_360_TO_180_ABS(rotation);
+    if (rotation > 90) {
+        *angle -= 180;
+        *speed = -(*speed);
+    } else if (rotation < -90) {
+        *angle += 180;
+        *speed = -(*speed);
     }
+    *angle = rotation + *last_angle;
+    ANGLE_LIMIT_360_TO_180_ABS(*angle);
 }
 
 /**
@@ -214,9 +230,12 @@ static void SteeringWheelCalculate()
         at_rf     = STEERING_CHASSIS_ALIGN_ANGLE_RF + offset_rf;
         at_lb     = STEERING_CHASSIS_ALIGN_ANGLE_LB + offset_lb;
         at_rb     = STEERING_CHASSIS_ALIGN_ANGLE_RB + offset_rb;
-    }
 
-    AngleLimit(&at_lf), AngleLimit(&at_rf), AngleLimit(&at_lb), AngleLimit(&at_rb);
+        MinmizeRotation(&at_lf, &at_lf_last, &vt_lf);
+        MinmizeRotation(&at_rf, &at_rf_last, &vt_rf);
+        MinmizeRotation(&at_lb, &at_lb_last, &vt_lb);
+        MinmizeRotation(&at_rb, &at_rb_last, &vt_rb);
+    }
 
     DJIMotorSetRef(motor_steering_lf, at_lf);
     DJIMotorSetRef(motor_steering_rf, at_rf);

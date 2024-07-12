@@ -105,7 +105,7 @@ static void DMMotorConfigModel(DM_MotorInstance *motor, CAN_Init_Config_s *confi
     switch (motor->control_type) {
         case MOTOR_CONTROL_MIT:
         case MOTOR_CONTROL_MIT_ONLY_TORQUE:
-            config->tx_id = config->tx_id;
+            // config->tx_id = config->tx_id; // 这行代码好像没必要啊，反正都一样,当初咋想的啊
             break;
         case MOTOR_CONTROL_POSITION_AND_SPEED:
             config->tx_id = 0x100 + config->tx_id;
