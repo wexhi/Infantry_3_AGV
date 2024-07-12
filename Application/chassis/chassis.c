@@ -50,7 +50,7 @@ void ChassisInit()
 {
     // 四个轮子的参数一样,改tx_id和反转标志位即可
     Motor_Init_Config_s chassis_motor_config = {
-        .can_init_config.can_handle   = &hcan1,
+        .can_init_config.can_handle   = &hcan2,
         .controller_param_init_config = {
             .speed_PID = {
                 .Kp            = 4.7, // 4.5
@@ -96,27 +96,25 @@ void ChassisInit()
 
     // 6020电机初始化
     Motor_Init_Config_s chassis_motor_steering_config = {
-        .can_init_config.can_handle   = &hcan2,
+        .can_init_config.can_handle   = &hcan1,
         .controller_param_init_config = {
             .angle_PID = {
-                .Kp                = 0.685,
-                .Ki                = 0.315,
-                .Kd                = 0.022,
+                .Kp                = 6.6,
+                .Ki                = 4.4,
+                .Kd                = 0,
+                .CoefA             = 0.1,
+                .CoefB             = 0.2,
                 .Improve           = PID_Trapezoid_Intergral | PID_Integral_Limit | PID_Derivative_On_Measurement | PID_DerivativeFilter | PID_ChangingIntegrationRate,
-                .IntegralLimit     = 10,
-                .CoefB             = 0.3,
-                .CoefA             = 0.2,
-                .MaxOut            = 400,
-                .Derivative_LPF_RC = 0.025,
+                .IntegralLimit     = 1200,
+                .MaxOut            = 2000,
+                .Derivative_LPF_RC = 0,
             },
             .speed_PID = {
-                .Kp            = 7500,
-                .Ki            = 1200,
+                .Kp            = 16,
+                .Ki            = 25,
                 .Kd            = 0,
-                .CoefB         = 0.3,
-                .CoefA         = 0.2,
-                .Improve       = PID_Trapezoid_Intergral | PID_Integral_Limit | PID_Derivative_On_Measurement | PID_ChangingIntegrationRate,
-                .IntegralLimit = 500,
+                .Improve       = PID_Integral_Limit | PID_Derivative_On_Measurement | PID_ChangingIntegrationRate,
+                .IntegralLimit = 5000,
                 .MaxOut        = 20000,
             },
         },
@@ -129,11 +127,11 @@ void ChassisInit()
         },
         .motor_type = GM6020,
     };
-    chassis_motor_steering_config.can_init_config.tx_id = 1;
-    motor_steering_lf                                   = DJIMotorInit(&chassis_motor_steering_config);
-    chassis_motor_steering_config.can_init_config.tx_id = 2;
-    motor_steering_rf                                   = DJIMotorInit(&chassis_motor_steering_config);
     chassis_motor_steering_config.can_init_config.tx_id = 3;
+    motor_steering_lf                                   = DJIMotorInit(&chassis_motor_steering_config);
+    chassis_motor_steering_config.can_init_config.tx_id = 1;
+    motor_steering_rf                                   = DJIMotorInit(&chassis_motor_steering_config);
+    chassis_motor_steering_config.can_init_config.tx_id = 2;
     motor_steering_lb                                   = DJIMotorInit(&chassis_motor_steering_config);
     chassis_motor_steering_config.can_init_config.tx_id = 4;
     motor_steering_rb                                   = DJIMotorInit(&chassis_motor_steering_config);
@@ -180,6 +178,15 @@ void ChassisInit()
 #endif // ONE_BOARD
 }
 
+static void AngleLimit(float *angle)
+{
+    if (*angle > 180) {
+        *angle -= 360;
+    } else if (*angle < -180) {
+        *angle += 360;
+    }
+}
+
 /**
  * @brief 舵轮电机角度解算
  *
@@ -189,22 +196,27 @@ static void SteeringWheelCalculate()
     float offset_lf, offset_rf, offset_lb, offset_rb;
     float at_lf_last, at_rf_last, at_lb_last, at_rb_last;
     at_lb_last = at_lb, at_lf_last = at_lf, at_rf_last = at_rf, at_rb_last = at_rb;
-    arm_sqrt_f32(powf(chassis_vx - chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2, 2) + powf(chassis_vy - chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2, 2), &vt_lf);
-    arm_sqrt_f32(powf(chassis_vx - chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2, 2) + powf(chassis_vy + chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2, 2), &vt_rf);
-    arm_sqrt_f32(powf(chassis_vx + chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2, 2) + powf(chassis_vy + chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2, 2), &vt_lb);
-    arm_sqrt_f32(powf(chassis_vx + chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2, 2) + powf(chassis_vy - chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2, 2), &vt_rb);
-    offset_lf = atan2f(chassis_vy + chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2, chassis_vx - chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2) * RAD_2_DEGREE;
-    offset_rf = atan2f(chassis_vy + chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2, chassis_vx + chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2) * RAD_2_DEGREE;
-    offset_lb = atan2f(chassis_vy - chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2, chassis_vx - chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2) * RAD_2_DEGREE;
-    offset_rb = atan2f(chassis_vy - chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2, chassis_vx + chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2) * RAD_2_DEGREE;
-    at_lf     = -STEERING_CHASSIS_ALIGN_ANGLE_LF - offset_lf; // 此处似乎不需要加上真实角度，因为我们需要的是绝对角度而不是相对角度
-    at_rf     = -STEERING_CHASSIS_ALIGN_ANGLE_RF - offset_rf;
-    at_lb     = -STEERING_CHASSIS_ALIGN_ANGLE_LB - offset_lb;
-    at_rb     = -STEERING_CHASSIS_ALIGN_ANGLE_RB - offset_rb;
-    if (!offset_lf) at_lf = at_lf_last;
-    if (!offset_rf) at_rf = at_rf_last;
-    if (!offset_lb) at_lb = at_lb_last;
-    if (!offset_rb) at_rb = at_rb_last;
+    if (chassis_vx == 0 && chassis_vy == 0 && chassis_cmd_recv.wz == 0) {
+        at_lf = at_lf_last;
+        at_rf = at_rf_last;
+        at_lb = at_lb_last;
+        at_rb = at_rb_last;
+    } else {
+        arm_sqrt_f32(powf(chassis_vx - chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2, 2) + powf(chassis_vy - chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2, 2), &vt_lf);
+        arm_sqrt_f32(powf(chassis_vx - chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2, 2) + powf(chassis_vy + chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2, 2), &vt_rf);
+        arm_sqrt_f32(powf(chassis_vx + chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2, 2) + powf(chassis_vy + chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2, 2), &vt_lb);
+        arm_sqrt_f32(powf(chassis_vx + chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2, 2) + powf(chassis_vy - chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2, 2), &vt_rb);
+        offset_lf = atan2f(chassis_vy + chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2, chassis_vx - chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2) * RAD_2_DEGREE;
+        offset_rf = atan2f(chassis_vy + chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2, chassis_vx + chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2) * RAD_2_DEGREE;
+        offset_lb = atan2f(chassis_vy - chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2, chassis_vx - chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2) * RAD_2_DEGREE;
+        offset_rb = atan2f(chassis_vy - chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2, chassis_vx + chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2) * RAD_2_DEGREE;
+        at_lf     = STEERING_CHASSIS_ALIGN_ANGLE_LF + offset_lf; // 此处似乎不需要加上真实角度，因为我们需要的是绝对角度而不是相对角度
+        at_rf     = STEERING_CHASSIS_ALIGN_ANGLE_RF + offset_rf;
+        at_lb     = STEERING_CHASSIS_ALIGN_ANGLE_LB + offset_lb;
+        at_rb     = STEERING_CHASSIS_ALIGN_ANGLE_RB + offset_rb;
+    }
+
+    AngleLimit(&at_lf), AngleLimit(&at_rf), AngleLimit(&at_lb), AngleLimit(&at_rb);
 
     DJIMotorSetRef(motor_steering_lf, at_lf);
     DJIMotorSetRef(motor_steering_rf, at_rf);
@@ -292,6 +304,7 @@ static void EstimateSpeed()
     //  ...
     // max 48000
 }
+float test_vx = 0, test_vy = 0, test_wz = 0, test_angle = 0;
 
 /* 机器人底盘控制核心任务 */
 void ChassisTask()
@@ -303,7 +316,15 @@ void ChassisTask()
 #endif
 #ifdef CHASSIS_BOARD
     chassis_cmd_recv = *(Chassis_Ctrl_Cmd_s *)CANCommGet(chasiss_can_comm);
-#endif                                                         // CHASSIS_BOARD                                                    // CHASSIS_BOARD
+#endif // CHASSIS_BOARD                                                    // CHASSIS_BOARD
+    /* test code start in here */
+    chassis_cmd_recv.chassis_mode = CHASSIS_SLOW;
+    chassis_cmd_recv.vx           = test_vx,
+    chassis_cmd_recv.vy           = test_vy;
+    chassis_cmd_recv.wz           = test_wz;
+    chassis_cmd_recv.offset_angle = test_angle;
+    /* test code end in here */
+
     if (chassis_cmd_recv.chassis_mode == CHASSIS_ZERO_FORCE) { // 如果出现重要模块离线或遥控器设置为急停,让电机停止
         DJIMotorStop(motor_lf);
         DJIMotorStop(motor_rf);
@@ -333,12 +354,6 @@ void ChassisTask()
         default:
             break;
     }
-
-    /* test code start in here */
-    chassis_cmd_recv.vx = 1, chassis_cmd_recv.vy = 2;
-    chassis_cmd_recv.wz           = 1;
-    chassis_cmd_recv.offset_angle = 146;
-    /* test code end in here */
 
     // 根据云台和底盘的角度offset将控制量映射到底盘坐标系上
     // 底盘逆时针旋转为角度正方向;云台命令的方向以云台指向的方向为x,采用右手系(x指向正北时y在正东)

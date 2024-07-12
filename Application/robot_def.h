@@ -43,15 +43,15 @@
 // #define CHASSIS_OMNI_WHEEL // 是否为全向轮底盘
 // #define CHASSIS_MCNAMEE_WHEEL     // 是否为麦克纳姆轮底盘
 #define CHASSIS_STEERING_WHEEL                // 是否为舵轮
-#define STEERING_CHASSIS_ALIGN_ECD_A        0 // 舵电机 A 编码器值，若有机械改动需要修改
-#define STEERING_CHASSIS_ALIGN_ECD_B        0 // 舵电机 B 编码器值，若有机械改动需要修改
-#define STEERING_CHASSIS_ALIGN_ECD_C        0 // 舵电机 C 编码器值，若有机械改动需要修改
-#define STEERING_CHASSIS_ALIGN_ECD_D        0 // 舵电机 D 编码器值，若有机械改动需要修改
+#define STEERING_CHASSIS_ALIGN_ECD_LF        6752 // 舵电机 A 编码器值，若有机械改动需要修改
+#define STEERING_CHASSIS_ALIGN_ECD_LB        0 // 舵电机 B 编码器值，若有机械改动需要修改
+#define STEERING_CHASSIS_ALIGN_ECD_RF        261 // 舵电机 C 编码器值，若有机械改动需要修改
+#define STEERING_CHASSIS_ALIGN_ECD_RB        0 // 舵电机 D 编码器值，若有机械改动需要修改
 
-#define STEERING_CHASSIS_ALIGN_ANGLE_LF STEERING_CHASSIS_ALIGN_ECD_A / 8192.f * 360.f // 舵轮 A 对齐角度
-#define STEERING_CHASSIS_ALIGN_ANGLE_LB STEERING_CHASSIS_ALIGN_ECD_B / 8192.f * 360.f // 舵轮 B 对齐角度
-#define STEERING_CHASSIS_ALIGN_ANGLE_RF STEERING_CHASSIS_ALIGN_ECD_C / 8192.f * 360.f // 舵轮 C 对齐角度
-#define STEERING_CHASSIS_ALIGN_ANGLE_RB STEERING_CHASSIS_ALIGN_ECD_D / 8192.f * 360.f // 舵轮 D 对齐角度
+#define STEERING_CHASSIS_ALIGN_ANGLE_LF STEERING_CHASSIS_ALIGN_ECD_LF / 8192.f * 360.f // 舵轮 A 对齐角度
+#define STEERING_CHASSIS_ALIGN_ANGLE_LB STEERING_CHASSIS_ALIGN_ECD_LB / 8192.f * 360.f // 舵轮 B 对齐角度
+#define STEERING_CHASSIS_ALIGN_ANGLE_RF STEERING_CHASSIS_ALIGN_ECD_RF / 8192.f * 360.f // 舵轮 C 对齐角度
+#define STEERING_CHASSIS_ALIGN_ANGLE_RB STEERING_CHASSIS_ALIGN_ECD_RB / 8192.f * 360.f // 舵轮 D 对齐角度
 
 // 检查是否出现主控板定义冲突,只允许一个开发板定义存在,否则编译会自动报错
 #if (defined(ONE_BOARD) && defined(CHASSIS_BOARD)) || \
