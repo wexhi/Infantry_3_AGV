@@ -30,11 +30,11 @@ static Referee_Interactive_info_t ui_data;                   // UI数据，将�
 static SuperCap_Instance *super_cap;                                                                     // 超级电容实例
 static DJIMotor_Instance *motor_lf, *motor_rf, *motor_lb, *motor_rb;                                     // left right forward back
 static DJIMotor_Instance *motor_steering_lf, *motor_steering_rf, *motor_steering_lb, *motor_steering_rb; // 6020电机
-static float at_lf, at_rf, at_lb, at_rb;                                                                 // 底盘的角度解算后的临时输出,待进行限幅
 
 /* 私有函数计算的中介变量,设为静态避免参数传递的开销 */
 static float chassis_vx, chassis_vy;     // 将云台系的速度投影到底盘
 static float vt_lf, vt_rf, vt_lb, vt_rb; // 底盘速度解算后的临时输出,待进行限幅
+static float at_lf, at_rf, at_lb, at_rb; // 底盘的角度解算后的临时输出,待进行限幅
 static PID_Instance chassis_follow_pid;  // 底盘跟随PID
 
 #if defined(CHASSIS_MCNAMEE_WHEEL)
@@ -110,11 +110,11 @@ void ChassisInit()
                 .Derivative_LPF_RC = 0,
             },
             .speed_PID = {
-                .Kp            = 16,
+                .Kp            = 13,
                 .Ki            = 25,
                 .Kd            = 0,
                 .Improve       = PID_Integral_Limit | PID_Derivative_On_Measurement | PID_ChangingIntegrationRate,
-                .IntegralLimit = 5000,
+                .IntegralLimit = 10000,
                 .MaxOut        = 20000,
             },
         },
@@ -185,8 +185,8 @@ void ChassisInit()
  *          两个角度都会让轮电机处于同一平行线上
  *
  * @param angle 目标角度
- * @param last_angle 上次上次角度
- * @param speed 轮电机的目标速度
+ * @param last_angle 上次角度
+ *
  */
 static void MinmizeRotation(float *angle, const float *last_angle, float *speed)
 {
@@ -199,7 +199,6 @@ static void MinmizeRotation(float *angle, const float *last_angle, float *speed)
         *angle += 180;
         *speed = -(*speed);
     }
-    *angle = rotation + *last_angle;
     ANGLE_LIMIT_360_TO_180_ABS(*angle);
 }
 
@@ -209,8 +208,8 @@ static void MinmizeRotation(float *angle, const float *last_angle, float *speed)
  */
 static void SteeringWheelCalculate()
 {
-    float offset_lf, offset_rf, offset_lb, offset_rb;
-    float at_lf_last, at_rf_last, at_lb_last, at_rb_last;
+    float offset_lf, offset_rf, offset_lb, offset_rb;     // 用于计算舵轮的角度
+    float at_lf_last, at_rf_last, at_lb_last, at_rb_last; // 上次的角度
     at_lb_last = at_lb, at_lf_last = at_lf, at_rf_last = at_rf, at_rb_last = at_rb;
     if (chassis_vx == 0 && chassis_vy == 0 && chassis_cmd_recv.wz == 0) {
         at_lf = at_lf_last;
@@ -230,6 +229,11 @@ static void SteeringWheelCalculate()
         at_rf     = STEERING_CHASSIS_ALIGN_ANGLE_RF + offset_rf;
         at_lb     = STEERING_CHASSIS_ALIGN_ANGLE_LB + offset_lb;
         at_rb     = STEERING_CHASSIS_ALIGN_ANGLE_RB + offset_rb;
+
+        ANGLE_LIMIT_360_TO_180_ABS(at_lf);
+        ANGLE_LIMIT_360_TO_180_ABS(at_rf);
+        ANGLE_LIMIT_360_TO_180_ABS(at_lb);
+        ANGLE_LIMIT_360_TO_180_ABS(at_rb);
 
         MinmizeRotation(&at_lf, &at_lf_last, &vt_lf);
         MinmizeRotation(&at_rf, &at_rf_last, &vt_rf);
@@ -304,6 +308,7 @@ static void LimitChassisOutput()
     }
     ui_data.Chassis_Power_Data.chassis_power_mx = super_cap->cap_data.voltage;
     SuperCapSend(); // 发送超级电容数据
+
     // 完成功率限制后进行电机参考输入设定
     DJIMotorSetRef(motor_lf, vt_lf * P_limit);
     DJIMotorSetRef(motor_rf, vt_rf * P_limit);
@@ -384,7 +389,7 @@ void ChassisTask()
 
     // 根据控制模式进行正运动学解算,计算底盘输出
     SteeringWheelCalculate();
-    MecanumCalculate();
+    // MecanumCalculate();
 
     // 根据裁判系统的反馈数据和电容数据对输出限幅并设定闭环参考值
     LimitChassisOutput();
