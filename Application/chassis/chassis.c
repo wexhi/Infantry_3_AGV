@@ -78,16 +78,16 @@ void ChassisInit()
         .motor_type = M3508,
     };
     //  @todo: 当前还没有设置电机的正反转,仍然需要手动添加reference的正负号,需要电机module的支持,待修改.
-    chassis_motor_config.can_init_config.tx_id                             = 1;
-    chassis_motor_config.controller_setting_init_config.motor_reverse_flag = MOTOR_DIRECTION_NORMAL;
-    motor_lf                                                               = DJIMotorInit(&chassis_motor_config);
-
     chassis_motor_config.can_init_config.tx_id                             = 2;
-    chassis_motor_config.controller_setting_init_config.motor_reverse_flag = MOTOR_DIRECTION_NORMAL;
-    motor_rf                                                               = DJIMotorInit(&chassis_motor_config);
+    chassis_motor_config.controller_setting_init_config.motor_reverse_flag = MOTOR_DIRECTION_REVERSE;
+    motor_lf                                                               = DJIMotorInit(&chassis_motor_config);
 
     chassis_motor_config.can_init_config.tx_id                             = 3;
     chassis_motor_config.controller_setting_init_config.motor_reverse_flag = MOTOR_DIRECTION_NORMAL;
+    motor_rf                                                               = DJIMotorInit(&chassis_motor_config);
+
+    chassis_motor_config.can_init_config.tx_id                             = 1;
+    chassis_motor_config.controller_setting_init_config.motor_reverse_flag = MOTOR_DIRECTION_REVERSE;
     motor_lb                                                               = DJIMotorInit(&chassis_motor_config);
 
     chassis_motor_config.can_init_config.tx_id                             = 4;
@@ -96,26 +96,27 @@ void ChassisInit()
 
     // 6020电机初始化
     Motor_Init_Config_s chassis_motor_steering_config = {
-        .can_init_config.can_handle   = &hcan1,
+        .can_init_config.can_handle   = &hcan2,
         .controller_param_init_config = {
             .angle_PID = {
-                .Kp                = 6.6,
-                .Ki                = 4.4,
+                .Kp                = 8,
+                .Ki                = 0,
                 .Kd                = 0,
                 .CoefA             = 0.1,
                 .CoefB             = 0.2,
                 .Improve           = PID_Trapezoid_Intergral | PID_Integral_Limit | PID_Derivative_On_Measurement | PID_DerivativeFilter | PID_ChangingIntegrationRate,
-                .IntegralLimit     = 1200,
+                .IntegralLimit     = 200,
                 .MaxOut            = 2000,
                 .Derivative_LPF_RC = 0,
             },
             .speed_PID = {
-                .Kp            = 13,
-                .Ki            = 25,
+                .Kp            = 27,
+                .Ki            = 2,
                 .Kd            = 0,
-                .Improve       = PID_Integral_Limit | PID_Derivative_On_Measurement | PID_ChangingIntegrationRate,
-                .IntegralLimit = 10000,
+                .Improve       = PID_Integral_Limit | PID_Derivative_On_Measurement | PID_ChangingIntegrationRate | PID_OutputFilter,
+                .IntegralLimit = 1000,
                 .MaxOut        = 20000,
+                .Output_LPF_RC = 0.05,
             },
         },
         .controller_setting_init_config = {
@@ -127,11 +128,11 @@ void ChassisInit()
         },
         .motor_type = GM6020,
     };
-    chassis_motor_steering_config.can_init_config.tx_id = 3;
-    motor_steering_lf                                   = DJIMotorInit(&chassis_motor_steering_config);
-    chassis_motor_steering_config.can_init_config.tx_id = 1;
-    motor_steering_rf                                   = DJIMotorInit(&chassis_motor_steering_config);
     chassis_motor_steering_config.can_init_config.tx_id = 2;
+    motor_steering_lf                                   = DJIMotorInit(&chassis_motor_steering_config);
+    chassis_motor_steering_config.can_init_config.tx_id = 3;
+    motor_steering_rf                                   = DJIMotorInit(&chassis_motor_steering_config);
+    chassis_motor_steering_config.can_init_config.tx_id = 1;
     motor_steering_lb                                   = DJIMotorInit(&chassis_motor_steering_config);
     chassis_motor_steering_config.can_init_config.tx_id = 4;
     motor_steering_rb                                   = DJIMotorInit(&chassis_motor_steering_config);
@@ -162,7 +163,7 @@ void ChassisInit()
     Chassis_IMU_data                 = INS_Init(); // 底盘IMU初始化
     CAN_Comm_Init_Config_s comm_conf = {
         .can_config = {
-            .can_handle = &hcan2,
+            .can_handle = &hcan1,
             .tx_id      = 0x311,
             .rx_id      = 0x312,
         },
@@ -221,18 +222,18 @@ static void SteeringWheelCalculate()
         float w      = chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2;
         float temp_x = chassis_vx - w, temp_y = chassis_vy - w;
         arm_sqrt_f32(temp_x * temp_x + temp_y * temp_y, &vt_lf); // x-w , y-
-        temp_y = chassis_vx + w;                                 // 重复利用变量,temp_x = chassis_vy - w;与上次相同因此注释
+        temp_y = chassis_vy + w;                                 // 重复利用变量,temp_x = chassis_vy - w;与上次相同因此注释
         arm_sqrt_f32(temp_x * temp_x + temp_y * temp_y, &vt_rf); // x- , y+
-        temp_x = chassis_vy + w;                                 // temp_y = chassis_vx + w;与上次相同因此注释
+        temp_x = chassis_vx + w;                                 // temp_y = chassis_vx + w;与上次相同因此注释
         arm_sqrt_f32(temp_x * temp_x + temp_y * temp_y, &vt_lb); // x+ , y+
-        temp_y = chassis_vx - w;                                 // temp_x = chassis_vy + w;与上次相同因此注释
+        temp_y = chassis_vy - w;                                 // temp_x = chassis_vy + w;与上次相同因此注释
         arm_sqrt_f32(temp_x * temp_x + temp_y * temp_y, &vt_rb); // x+ , y-
 
         // 计算角度偏移
-        offset_lf = atan2f(chassis_vy + w, chassis_vx - w) * RAD_2_DEGREE;
-        offset_rf = atan2f(chassis_vy + w, chassis_vx + w) * RAD_2_DEGREE;
-        offset_lb = atan2f(chassis_vy - w, chassis_vx - w) * RAD_2_DEGREE;
-        offset_rb = atan2f(chassis_vy - w, chassis_vx + w) * RAD_2_DEGREE;
+        offset_lf = atan2f(chassis_vy - w, chassis_vx - w) * RAD_2_DEGREE;
+        offset_rf = atan2f(chassis_vy - w, chassis_vx + w) * RAD_2_DEGREE;
+        offset_lb = atan2f(chassis_vy + w, chassis_vx - w) * RAD_2_DEGREE;
+        offset_rb = atan2f(chassis_vy + w, chassis_vx + w) * RAD_2_DEGREE;
 
         at_lf = STEERING_CHASSIS_ALIGN_ANGLE_LF + offset_lf; // 此处似乎不需要加上真实角度，因为我们需要的是绝对角度而不是相对角度
         at_rf = STEERING_CHASSIS_ALIGN_ANGLE_RF + offset_rf;
@@ -337,7 +338,7 @@ static void EstimateSpeed()
     //  ...
     // max 48000
 }
-float test_vx = 0, test_vy = 0, test_wz = 0, test_angle = 0;
+// float test_vx = 0, test_vy = 0, test_wz = 0, test_angle = 0;
 
 /* 机器人底盘控制核心任务 */
 void ChassisTask()
@@ -351,11 +352,11 @@ void ChassisTask()
     chassis_cmd_recv = *(Chassis_Ctrl_Cmd_s *)CANCommGet(chasiss_can_comm);
 #endif // CHASSIS_BOARD                                                    // CHASSIS_BOARD
     /* test code start in here */
-    chassis_cmd_recv.chassis_mode = CHASSIS_SLOW;
-    chassis_cmd_recv.vx           = test_vx,
-    chassis_cmd_recv.vy           = test_vy;
-    chassis_cmd_recv.wz           = test_wz;
-    chassis_cmd_recv.offset_angle = test_angle;
+    // chassis_cmd_recv.chassis_mode = CHASSIS_SLOW;
+    // chassis_cmd_recv.vx           = test_vx,
+    // chassis_cmd_recv.vy           = test_vy;
+    // chassis_cmd_recv.wz           = test_wz;
+    // chassis_cmd_recv.offset_angle = test_angle;
     /* test code end in here */
 
     if (chassis_cmd_recv.chassis_mode == CHASSIS_ZERO_FORCE) { // 如果出现重要模块离线或遥控器设置为急停,让电机停止
@@ -394,7 +395,7 @@ void ChassisTask()
     cos_theta  = arm_cos_f32(chassis_cmd_recv.offset_angle * DEGREE_2_RAD);
     sin_theta  = arm_sin_f32(chassis_cmd_recv.offset_angle * DEGREE_2_RAD);
     chassis_vx = chassis_cmd_recv.vx * cos_theta - chassis_cmd_recv.vy * sin_theta;
-    chassis_vy = -chassis_cmd_recv.vx * sin_theta - chassis_cmd_recv.vy * cos_theta;
+    chassis_vy = chassis_cmd_recv.vx * sin_theta + chassis_cmd_recv.vy * cos_theta;
 
     // 根据控制模式进行正运动学解算,计算底盘输出
     SteeringWheelCalculate();

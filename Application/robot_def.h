@@ -42,11 +42,11 @@
 // 底盘参数
 // #define CHASSIS_OMNI_WHEEL // 是否为全向轮底盘
 // #define CHASSIS_MCNAMEE_WHEEL     // 是否为麦克纳姆轮底盘
-#define CHASSIS_STEERING_WHEEL                // 是否为舵轮
-#define STEERING_CHASSIS_ALIGN_ECD_LF        6752 // 舵电机 A 编码器值，若有机械改动需要修改
-#define STEERING_CHASSIS_ALIGN_ECD_LB        0 // 舵电机 B 编码器值，若有机械改动需要修改
-#define STEERING_CHASSIS_ALIGN_ECD_RF        261 // 舵电机 C 编码器值，若有机械改动需要修改
-#define STEERING_CHASSIS_ALIGN_ECD_RB        0 // 舵电机 D 编码器值，若有机械改动需要修改
+#define CHASSIS_STEERING_WHEEL               // 是否为舵轮
+#define STEERING_CHASSIS_ALIGN_ECD_LF   7630 // 舵电机 A 编码器值，若有机械改动需要修改
+#define STEERING_CHASSIS_ALIGN_ECD_LB   4089 // 舵电机 B 编码器值，若有机械改动需要修改
+#define STEERING_CHASSIS_ALIGN_ECD_RF   1402 // 舵电机 C 编码器值，若有机械改动需要修改
+#define STEERING_CHASSIS_ALIGN_ECD_RB   659  // 舵电机 D 编码器值，若有机械改动需要修改
 
 #define STEERING_CHASSIS_ALIGN_ANGLE_LF STEERING_CHASSIS_ALIGN_ECD_LF / 8192.f * 360.f // 舵轮 A 对齐角度
 #define STEERING_CHASSIS_ALIGN_ANGLE_LB STEERING_CHASSIS_ALIGN_ECD_LB / 8192.f * 360.f // 舵轮 B 对齐角度
@@ -61,8 +61,8 @@
 #endif
 
 // 检查是否出现底盘类型定义冲突，只允许一个底盘类型定义存在，否则编译会自动报错
-#if (defined(CHASSIS_OMNI_WHEEL) && defined(CHASSIS_MCNAMEE_WHEEL)) || \
-    (defined(CHASSIS_OMNI_WHEEL) && defined(CHASSIS_STEERING_WHEEL)) ||     \
+#if (defined(CHASSIS_OMNI_WHEEL) && defined(CHASSIS_MCNAMEE_WHEEL)) ||  \
+    (defined(CHASSIS_OMNI_WHEEL) && defined(CHASSIS_STEERING_WHEEL)) || \
     (defined(CHASSIS_MCNAMEE_WHEEL) && defined(CHASSIS_STEERING_WHEEL))
 #error Conflict chassis definition! You can only define one chassis type.
 #endif
