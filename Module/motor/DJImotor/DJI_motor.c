@@ -60,8 +60,9 @@ static uint8_t sender_enable_flag[6] = {0};
 DJIMotor_Instance *DJIMotorInit(Motor_Init_Config_s *config)
 {
     if (idx > DJI_MOTOR_CNT) {
-        // 超出最大注册数量
-        return NULL;
+        while (1) {
+            // 超出最大注册数量
+        }
     }
 
     DJIMotor_Instance *motor = (DJIMotor_Instance *)malloc(sizeof(DJIMotor_Instance));
@@ -284,8 +285,7 @@ static void MotorSenderGrouping(DJIMotor_Instance *motor, CAN_Init_Config_s *can
                 if (dji_motor_instances[i]->motor_can_instance->can_handle == can_config->can_handle && dji_motor_instances[i]->motor_can_instance->rx_id == can_config->rx_id) {
                     // id冲突,进入错误处理
                     uint16_t can_bus __attribute__((unused)) = can_config->can_handle == &hcan1 ? 1 : 2;
-                    while (1)
-                        ;
+                    while (1);
                 }
             }
             break;
@@ -308,15 +308,13 @@ static void MotorSenderGrouping(DJIMotor_Instance *motor, CAN_Init_Config_s *can
                 if (dji_motor_instances[i]->motor_can_instance->can_handle == can_config->can_handle && dji_motor_instances[i]->motor_can_instance->rx_id == can_config->rx_id) {
                     // id冲突,进入错误处理
                     uint16_t can_bus __attribute__((unused)) = can_config->can_handle == &hcan1 ? 1 : 2;
-                    while (1)
-                        ;
+                    while (1);
                 }
             }
             break;
 
         default:
-            while (1)
-                ;
+            while (1);
     }
 }
 

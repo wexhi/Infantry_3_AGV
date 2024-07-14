@@ -217,18 +217,27 @@ static void SteeringWheelCalculate()
         at_lb = at_lb_last;
         at_rb = at_rb_last;
     } else {
-        arm_sqrt_f32(powf(chassis_vx - chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2, 2) + powf(chassis_vy - chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2, 2), &vt_lf);
-        arm_sqrt_f32(powf(chassis_vx - chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2, 2) + powf(chassis_vy + chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2, 2), &vt_rf);
-        arm_sqrt_f32(powf(chassis_vx + chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2, 2) + powf(chassis_vy + chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2, 2), &vt_lb);
-        arm_sqrt_f32(powf(chassis_vx + chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2, 2) + powf(chassis_vy - chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2, 2), &vt_rb);
-        offset_lf = atan2f(chassis_vy + chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2, chassis_vx - chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2) * RAD_2_DEGREE;
-        offset_rf = atan2f(chassis_vy + chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2, chassis_vx + chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2) * RAD_2_DEGREE;
-        offset_lb = atan2f(chassis_vy - chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2, chassis_vx - chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2) * RAD_2_DEGREE;
-        offset_rb = atan2f(chassis_vy - chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2, chassis_vx + chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2) * RAD_2_DEGREE;
-        at_lf     = STEERING_CHASSIS_ALIGN_ANGLE_LF + offset_lf; // 此处似乎不需要加上真实角度，因为我们需要的是绝对角度而不是相对角度
-        at_rf     = STEERING_CHASSIS_ALIGN_ANGLE_RF + offset_rf;
-        at_lb     = STEERING_CHASSIS_ALIGN_ANGLE_LB + offset_lb;
-        at_rb     = STEERING_CHASSIS_ALIGN_ANGLE_RB + offset_rb;
+        // 生成预计算变量，减少计算量，空间换时间
+        float w      = chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2;
+        float temp_x = chassis_vx - w, temp_y = chassis_vy - w;
+        arm_sqrt_f32(temp_x * temp_x + temp_y * temp_y, &vt_lf); // x-w , y-
+        temp_y = chassis_vx + w;                                 // 重复利用变量,temp_x = chassis_vy - w;与上次相同因此注释
+        arm_sqrt_f32(temp_x * temp_x + temp_y * temp_y, &vt_rf); // x- , y+
+        temp_x = chassis_vy + w;                                 // temp_y = chassis_vx + w;与上次相同因此注释
+        arm_sqrt_f32(temp_x * temp_x + temp_y * temp_y, &vt_lb); // x+ , y+
+        temp_y = chassis_vx - w;                                 // temp_x = chassis_vy + w;与上次相同因此注释
+        arm_sqrt_f32(temp_x * temp_x + temp_y * temp_y, &vt_rb); // x+ , y-
+
+        // 计算角度偏移
+        offset_lf = atan2f(chassis_vy + w, chassis_vx - w) * RAD_2_DEGREE;
+        offset_rf = atan2f(chassis_vy + w, chassis_vx + w) * RAD_2_DEGREE;
+        offset_lb = atan2f(chassis_vy - w, chassis_vx - w) * RAD_2_DEGREE;
+        offset_rb = atan2f(chassis_vy - w, chassis_vx + w) * RAD_2_DEGREE;
+
+        at_lf = STEERING_CHASSIS_ALIGN_ANGLE_LF + offset_lf; // 此处似乎不需要加上真实角度，因为我们需要的是绝对角度而不是相对角度
+        at_rf = STEERING_CHASSIS_ALIGN_ANGLE_RF + offset_rf;
+        at_lb = STEERING_CHASSIS_ALIGN_ANGLE_LB + offset_lb;
+        at_rb = STEERING_CHASSIS_ALIGN_ANGLE_RB + offset_rb;
 
         ANGLE_LIMIT_360_TO_180_ABS(at_lf);
         ANGLE_LIMIT_360_TO_180_ABS(at_rf);
@@ -251,13 +260,13 @@ static void SteeringWheelCalculate()
  * @brief 计算每个轮毂电机的输出,正运动学解算
  *        用宏进行预替换减小开销,运动解算具体过程参考教程
  */
-static void MecanumCalculate()
-{
-    vt_lf = (-chassis_vx + chassis_vy) * CHASSIS_WHEEL_OFFSET + chassis_cmd_recv.wz; // 1
-    vt_rf = (chassis_vx + chassis_vy) * CHASSIS_WHEEL_OFFSET + chassis_cmd_recv.wz;  // 2
-    vt_rb = (-chassis_vx - chassis_vy) * CHASSIS_WHEEL_OFFSET + chassis_cmd_recv.wz; // 3
-    vt_lb = (chassis_vx - chassis_vy) * CHASSIS_WHEEL_OFFSET + chassis_cmd_recv.wz;  // 4
-}
+// static void MecanumCalculate()
+// {
+//     vt_lf = (-chassis_vx + chassis_vy) * CHASSIS_WHEEL_OFFSET + chassis_cmd_recv.wz; // 1
+//     vt_rf = (chassis_vx + chassis_vy) * CHASSIS_WHEEL_OFFSET + chassis_cmd_recv.wz;  // 2
+//     vt_rb = (-chassis_vx - chassis_vy) * CHASSIS_WHEEL_OFFSET + chassis_cmd_recv.wz; // 3
+//     vt_lb = (chassis_vx - chassis_vy) * CHASSIS_WHEEL_OFFSET + chassis_cmd_recv.wz;  // 4
+// }
 
 /**
  * @brief 电机速度限制
