@@ -208,7 +208,7 @@ static void RemoteControlSet(void)
 {
     robot_state                     = ROBOT_READY;
     shoot_cmd_send.shoot_mode       = SHOOT_ON;
-    chassis_cmd_send.chassis_mode   = CHASSIS_SLOW; // 底盘模式
+    chassis_cmd_send.chassis_mode   = CHASSIS_FOLLOW_GIMBAL_YAW; // 底盘模式
     gimbal_cmd_send.gimbal_mode     = GIMBAL_GYRO_MODE;
     chassis_cmd_send.super_cap_mode = SUPER_CAP_ON;
 

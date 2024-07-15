@@ -53,15 +53,15 @@ void ChassisInit()
         .can_init_config.can_handle   = &hcan2,
         .controller_param_init_config = {
             .speed_PID = {
-                .Kp            = 4.7, // 4.5
-                .Ki            = 0.2, // 0
+                .Kp            = 4,   // 4.5
+                .Ki            = 0.1, // 0
                 .Kd            = 0,   // 0
                 .IntegralLimit = 5000,
                 .Improve       = PID_Trapezoid_Intergral | PID_Integral_Limit | PID_Derivative_On_Measurement,
                 .MaxOut        = 12000,
             },
             .current_PID = {
-                .Kp            = 0.7, // 0.4
+                .Kp            = 0.6, // 0.4
                 .Ki            = 0,   // 0
                 .Kd            = 0,
                 .IntegralLimit = 3000,
@@ -99,24 +99,24 @@ void ChassisInit()
         .can_init_config.can_handle   = &hcan2,
         .controller_param_init_config = {
             .angle_PID = {
-                .Kp                = 8,
+                .Kp                = 9,
                 .Ki                = 0,
                 .Kd                = 0,
-                .CoefA             = 0.1,
-                .CoefB             = 0.2,
+                .CoefA             = 0.2,
+                .CoefB             = 0.3,
                 .Improve           = PID_Trapezoid_Intergral | PID_Integral_Limit | PID_Derivative_On_Measurement | PID_DerivativeFilter | PID_ChangingIntegrationRate,
                 .IntegralLimit     = 200,
-                .MaxOut            = 2000,
+                .MaxOut            = 4000,
                 .Derivative_LPF_RC = 0,
             },
             .speed_PID = {
-                .Kp            = 40,
+                .Kp            = 38,
                 .Ki            = 2,
                 .Kd            = 0,
                 .Improve       = PID_Integral_Limit | PID_Derivative_On_Measurement | PID_ChangingIntegrationRate | PID_OutputFilter,
                 .IntegralLimit = 1000,
                 .MaxOut        = 20000,
-                .Output_LPF_RC = 0.05,
+                .Output_LPF_RC = 0.03,
             },
         },
         .controller_setting_init_config = {
@@ -383,7 +383,10 @@ void ChassisTask()
     // 根据控制模式设定旋转速度
     switch (chassis_cmd_recv.chassis_mode) {
         case CHASSIS_FOLLOW_GIMBAL_YAW: // 跟随云台,单独设置pid
-            chassis_cmd_recv.wz = PIDCalculate(&chassis_follow_pid, chassis_cmd_recv.offset_angle, 0);
+            // chassis_cmd_recv.wz = PIDCalculate(&chassis_follow_pid, chassis_cmd_recv.offset_angle, 0);
+            if (chassis_cmd_recv.offset_angle > 2 || chassis_cmd_recv.offset_angle < -2) {
+                chassis_cmd_recv.wz = -0.08 * chassis_cmd_recv.offset_angle * abs(chassis_cmd_recv.offset_angle);
+            }
             break;
         default:
             break;
