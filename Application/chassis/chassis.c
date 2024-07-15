@@ -110,7 +110,7 @@ void ChassisInit()
                 .Derivative_LPF_RC = 0,
             },
             .speed_PID = {
-                .Kp            = 27,
+                .Kp            = 40,
                 .Ki            = 2,
                 .Kd            = 0,
                 .Improve       = PID_Integral_Limit | PID_Derivative_On_Measurement | PID_ChangingIntegrationRate | PID_OutputFilter,
