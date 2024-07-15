@@ -21,4 +21,11 @@
  */
 void MotorControlTask();
 
+/**
+ * @brief 电机控制闭环任务(舵轮底盘专用),在RTOS中应该设定为1Khz运行
+ *        舵机控制任务的频率设定为20Hz或更低
+ *
+ */
+void MotorControlSteeringTask();
+
 #endif // MOTOR_TASK_H

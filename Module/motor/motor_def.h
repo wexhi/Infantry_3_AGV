@@ -76,7 +76,8 @@ typedef enum {
 
 /* LK电机工作类型 */
 typedef enum {
-    LK_SINGLE_MOTOR = 0,
+    LK_SINGLE_MOTOR_TORQUE = 0,
+    LK_SINGLE_MOTOR_SPEED,
     LK_MULTI_MOTOR,
 } LKMotor_Working_Type_e;
 
@@ -165,7 +166,6 @@ typedef struct
     Motor_Controller_Init_s controller_param_init_config;
     Motor_Control_Setting_s controller_setting_init_config;
     Motor_Type_e motor_type;
-    LKMotor_Working_Type_e motor_working_type;
     DMMotor_Controll_Type_e control_type;   // 电机工作类型,达妙电机专用
     LKMotor_Working_Type_e motor_work_type; // LK电机工作类型，单电机或多电机
     CAN_Init_Config_s can_init_config;

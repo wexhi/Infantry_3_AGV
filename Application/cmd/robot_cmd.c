@@ -90,7 +90,7 @@ void RobotCMDInit(void)
 #ifdef GIMBAL_BOARD
     CAN_Comm_Init_Config_s comm_conf = {
         .can_config = {
-            .can_handle = &hcan2,
+            .can_handle = &hcan1,
             .tx_id      = 0x312,
             .rx_id      = 0x311,
         },
@@ -138,8 +138,8 @@ void RobotCMDTask(void)
     {
         RemoteControlSet();
     } else if (switch_is_up(rc_data[TEMP].rc.switch_right)) {
-        // EmergencyHandler();
-        RemoteMouseKeySet();
+        EmergencyHandler();
+        // RemoteMouseKeySet();
     }
 
     // 设置视觉发送数据,还需增加加速度和角速度数据
@@ -195,6 +195,9 @@ static void CalcOffsetAngle()
     else
         chassis_cmd_send.offset_angle = angle - YAW_ALIGN_ANGLE + 360.0f;
 #endif
+#if YAW_CHASSIS_REVERSE
+    chassis_cmd_send.offset_angle = -chassis_cmd_send.offset_angle;
+#endif
 }
 
 /**
@@ -213,7 +216,7 @@ static void RemoteControlSet(void)
     if (switch_is_down(rc_data[TEMP].rc.switch_left) || !vision_ctrl->is_tracking) {
         // 按照摇杆的输出大小进行角度增量,增益系数需调整
         gimbal_cmd_send.yaw -= 0.001f * (float)rc_data[TEMP].rc.rocker_r_;
-        gimbal_cmd_send.pitch += 0.001f * (float)rc_data[TEMP].rc.rocker_r1;
+        gimbal_cmd_send.pitch -= 0.0005f * (float)rc_data[TEMP].rc.rocker_r1;
     }
 
     // 云台参数,确定云台控制数据
@@ -230,9 +233,9 @@ static void RemoteControlSet(void)
 
     // 底盘参数,目前没有加入小陀螺(调试似乎暂时没有必要),系数需要调整
     // max 70.f,参数过大会达到电机的峰值速度，导致底盘漂移等问题，且毫无意义
-    chassis_cmd_send.vx = -60.0f * (float)rc_data[TEMP].rc.rocker_l_; // _水平方向
-    chassis_cmd_send.vy = -60.0f * (float)rc_data[TEMP].rc.rocker_l1; // 1竖直方向
-    chassis_cmd_send.wz = -30.0f * (float)rc_data[TEMP].rc.dial;
+    chassis_cmd_send.vx = 60.0f * (float)rc_data[TEMP].rc.rocker_l1; // 1水平方向
+    chassis_cmd_send.vy = 60.0f * (float)rc_data[TEMP].rc.rocker_l_; // _竖直方向
+    // chassis_cmd_send.wz = -30.0f * (float)rc_data[TEMP].rc.dial;
 
     // 发射参数
     if (switch_is_down(rc_data[TEMP].rc.switch_left)) // 左侧开关状态[上],弹舱打开

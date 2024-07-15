@@ -80,7 +80,11 @@ __attribute__((noreturn)) void StartINSTASK(void const *argument)
 __attribute__((noreturn)) void StartMOTORTASK(void const *argument)
 {
     for (;;) {
+#if defined(CHASSIS_BOARD) && defined(CHASSIS_STEERING_WHEEL)
+        MotorControlSteeringTask();
+#else
         MotorControlTask();
+#endif
         osDelay(1);
     }
 }

@@ -70,7 +70,7 @@ LKMotor_Instance *LKMotorInit(Motor_Init_Config_s *config)
     // 电机的基本设置
     motor->motor_type         = config->motor_type;                     // 电机类型 GM6020/M3508/M2006
     motor->motor_settings     = config->controller_setting_init_config; // 电机控制设置 正反转,闭环类型等
-    motor->motor_working_type = config->motor_working_type;
+    motor->motor_working_type = config->motor_work_type;
     if (motor->motor_working_type == LK_MULTI_MOTOR) {
         sender_instance        = motor->motor_can_ins;
         sender_instance->tx_id = 0x280; //  修改tx_id为0x280,用于多电机发送,不用管其他LKMotorInstance的tx_id,它们仅作初始化用
@@ -108,7 +108,7 @@ LKMotor_Instance *LKMotorInit(Motor_Init_Config_s *config)
 void LKMotorControl()
 {
     float pid_measure, pid_ref;
-    int16_t set;
+    int16_t set16;
     int32_t set32;
     LKMotor_Instance *motor;
     LKMotor_Measure_t *measure;
@@ -164,34 +164,49 @@ void LKMotorControl()
 
         // 获取最终输出
         motor_controller->pid_out = pid_ref; // 保存电流环输出
-        set                       = pid_ref;
+        set16                     = pid_ref;
         set32                     = pid_ref;
-
-        if (motor->motor_working_type == LK_MULTI_MOTOR) { // 这里随便写的,大概率有BUG,为了兼容多电机命令.后续应该将tx_id以更好的方式表达电机id,单独使用一个CANInstance,而不是用第一个电机的CANInstance
-            memcpy(sender_instance->tx_buff + (motor->motor_can_ins->tx_id - 0x280) * 2, &set, sizeof(uint16_t));
-
-            if (motor->stop_flag == MOTOR_STOP) { // 若该电机处于停止状态,直接将发送buff置零
-                memset(sender_instance->tx_buff + (motor->motor_can_ins->tx_id - 0x280) * 2, 0, sizeof(uint16_t));
+        if (idx) // 如果有电机注册了,不论单电机还是多电机，都应该只发送一次
+        {
+            motor = lkmotor_instance[0]; // 只观察第一个电机，因为1条总线上要么单电机，要么多电机
+            switch (motor->motor_working_type) {
+                case LK_SINGLE_MOTOR_TORQUE:
+                    motor->motor_can_ins->tx_buff[0] = 0xA1; // 电机力矩控制指令
+                    memcpy(motor->motor_can_ins->tx_buff + 4, &set16, sizeof(int16_t));
+                    if (motor->stop_flag == MOTOR_STOP) { // 若该电机处于停止状态,直接将发送buff置零
+                        memset(motor->motor_can_ins->tx_buff + 4, 0, sizeof(int16_t));
+                    }
+                    CANTransmit(motor->motor_can_ins, 0.2f);
+                    break;
+                case LK_SINGLE_MOTOR_SPEED:
+                    motor->motor_can_ins->tx_buff[0] = 0xA2; // 电机速度控制指令
+                    memcpy(motor->motor_can_ins->tx_buff + 4, &set32, sizeof(int32_t));
+                    if (motor->stop_flag == MOTOR_STOP) { // 若该电机处于停止状态,直接将发送buff置零
+                        memset(motor->motor_can_ins->tx_buff + 4, 0, sizeof(int32_t));
+                    }
+                    CANTransmit(motor->motor_can_ins, 0.2f);
+                    break;
+                case LK_MULTI_MOTOR:
+                    memcpy(sender_instance->tx_buff + (motor->motor_can_ins->tx_id - 0x280) * 2, &set16, sizeof(uint16_t));
+                    if (motor->stop_flag == MOTOR_STOP) { // 若该电机处于停止状态,直接将发送buff置零
+                        memset(sender_instance->tx_buff + (motor->motor_can_ins->tx_id - 0x280) * 2, 0, sizeof(uint16_t));
+                    }
+                    CANTransmit(sender_instance, 0.2f);
+                    break;
+                default:
+                    break;
             }
-        } else if (motor->motor_working_type == LK_SINGLE_MOTOR) {
-            motor->motor_can_ins->tx_buff[0] = 0xA2; // 电机速度控制指令
-            memcpy(motor->motor_can_ins->tx_buff + 4, &set32, sizeof(int32_t));
+        }
 
-            if (motor->stop_flag == MOTOR_STOP) { // 若该电机处于停止状态,直接将发送buff置零
-                memset(motor->motor_can_ins->tx_buff + 4, 0, sizeof(int32_t));
-            }
-        }
-    }
-
-    if (idx) // 如果有电机注册了,不论单电机还是多电机，都应该只发送一次
-    {
-        motor = lkmotor_instance[0]; // 只观察第一个电机，因为1条总线上要么单电机，要么多电机
-        if (motor->motor_working_type == LK_MULTI_MOTOR) {
-            CANTransmit(sender_instance, 0.2f);
-        }
-        if (motor->motor_working_type == LK_SINGLE_MOTOR) {
-            CANTransmit(motor->motor_can_ins, 0.2f);
-        }
+        // if (idx) // 如果有电机注册了,不论单电机还是多电机，都应该只发送一次
+        // {
+        //     motor = lkmotor_instance[0]; // 只观察第一个电机，因为1条总线上要么单电机，要么多电机
+        //     if (motor->motor_working_type == LK_MULTI_MOTOR) {
+        //         CANTransmit(sender_instance, 0.2f);
+        //     }
+        //     if (motor->motor_working_type == LK_SINGLE_MOTOR_SPEED) {
+        //         CANTransmit(motor->motor_can_ins, 0.2f);
+        //     }
     }
 }
 
@@ -203,4 +218,35 @@ void LKMotorSetRef(LKMotor_Instance *motor, float ref)
 uint8_t LKMotorIsOnline(LKMotor_Instance *motor)
 {
     return DaemonIsOnline(motor->daemon);
+}
+
+/**
+ * @brief 切换反馈的目标来源,如将角速度和角度的来源换为IMU(小陀螺模式常用)
+ *
+ * @param motor 要切换反馈数据来源的电机
+ * @param loop  要切换反馈数据来源的控制闭环
+ * @param type  目标反馈模式
+ * @param ptr   目标反馈数据指针
+ */
+void LKMotorChangeFeed(LKMotor_Instance *motor, Closeloop_Type_e loop, Feedback_Source_e type, float *ptr)
+{
+    if (loop == ANGLE_LOOP) {
+        motor->motor_settings.angle_feedback_source      = type;
+        motor->motor_controller.other_angle_feedback_ptr = ptr;
+    } else if (loop == SPEED_LOOP) {
+        motor->motor_settings.speed_feedback_source      = type;
+        motor->motor_controller.other_speed_feedback_ptr = ptr;
+    } else
+        return; // 检查是否传入了正确的LOOP类型,或发生了指针越界
+}
+
+/**
+ * @brief 修改电机闭环目标(外层闭环)
+ *
+ * @param motor  要修改的电机实例指针
+ * @param outer_loop 外层闭环类型
+ */
+void LKMotorOuterLoop(LKMotor_Instance *motor, Closeloop_Type_e outer_loop)
+{
+    motor->motor_settings.outer_loop_type = outer_loop;
 }

@@ -88,4 +88,8 @@ void LKMotorEnable(LKMotor_Instance *motor);
 
 uint8_t LKMotorIsOnline(LKMotor_Instance *motor);
 
+void LKMotorChangeFeed(LKMotor_Instance *motor, Closeloop_Type_e loop, Feedback_Source_e type, float *ptr);
+
+void LKMotorOuterLoop(LKMotor_Instance *motor, Closeloop_Type_e outer_loop);
+
 #endif // LK_MOTOR_H
