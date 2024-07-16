@@ -281,7 +281,7 @@ static void RemoteMouseKeySet(void)
             chassis_cmd_send.super_cap_mode = SUPER_CAP_OFF;
             break;
         case 1:
-            chassis_speed_buff              = 2.5f;
+            chassis_speed_buff              = 1.2f;
             chassis_cmd_send.chassis_mode   = CHASSIS_MEDIUM;
             chassis_cmd_send.super_cap_mode = SUPER_CAP_ON;
             break;
@@ -296,14 +296,14 @@ static void RemoteMouseKeySet(void)
 
     // 若在底盘跟随云台模式下按住shift键，则强制改为小陀螺模式
     if (rc_data[TEMP].key[KEY_PRESS].shift && chassis_cmd_send.chassis_mode == CHASSIS_FOLLOW_GIMBAL_YAW) {
-        chassis_speed_buff              = 2.5f;
+        chassis_speed_buff              = 1.2f;
         chassis_cmd_send.chassis_mode   = CHASSIS_MEDIUM;
         chassis_cmd_send.super_cap_mode = SUPER_CAP_ON;
     }
 
-    chassis_cmd_send.vx = -(rc_data[TEMP].key[KEY_PRESS].d - rc_data[TEMP].key[KEY_PRESS].a) * 50000 * chassis_speed_buff; // 系数待测
-    chassis_cmd_send.vy = -(rc_data[TEMP].key[KEY_PRESS].w - rc_data[TEMP].key[KEY_PRESS].s) * 50000 * chassis_speed_buff;
-    chassis_cmd_send.wz = rc_data[TEMP].key[KEY_PRESS].shift * 24000 * chassis_speed_buff;
+    chassis_cmd_send.vx = (rc_data[TEMP].key[KEY_PRESS].w - rc_data[TEMP].key[KEY_PRESS].s) * 35000 * chassis_speed_buff; // 系数待测
+    chassis_cmd_send.vy = (rc_data[TEMP].key[KEY_PRESS].d - rc_data[TEMP].key[KEY_PRESS].a) * 35000 * chassis_speed_buff;
+    chassis_cmd_send.wz = rc_data[TEMP].key[KEY_PRESS].shift * 1000 * chassis_speed_buff;
 
     gimbal_cmd_send.yaw -= (float)rc_data[TEMP].mouse.x / 660 * 2.5; // 系数待测
     gimbal_cmd_send.pitch += (float)rc_data[TEMP].mouse.y / 660 * 2.5;
@@ -547,7 +547,7 @@ static void MouseKeySet(void)
             chassis_cmd_send.super_cap_mode = SUPER_CAP_OFF;
             break;
         case 1:
-            chassis_speed_buff              = 2.5f;
+            chassis_speed_buff              = 1.2f;
             chassis_cmd_send.chassis_mode   = CHASSIS_MEDIUM;
             chassis_cmd_send.super_cap_mode = SUPER_CAP_ON;
             break;
@@ -562,14 +562,14 @@ static void MouseKeySet(void)
 
     // 若在底盘跟随云台模式下按住shift键，则强制改为小陀螺模式
     if (video_data[TEMPV].key[V_KEY_PRESS].shift && chassis_cmd_send.chassis_mode == CHASSIS_FOLLOW_GIMBAL_YAW) {
-        chassis_speed_buff              = 2.5f;
+        chassis_speed_buff              = 1.2f;
         chassis_cmd_send.chassis_mode   = CHASSIS_MEDIUM;
         chassis_cmd_send.super_cap_mode = SUPER_CAP_ON;
     }
 
-    chassis_cmd_send.vx = -(video_data[TEMPV].key[V_KEY_PRESS].d - video_data[TEMPV].key[KEY_PRESS].a) * 50000 * chassis_speed_buff; // 系数待测
-    chassis_cmd_send.vy = -(video_data[TEMPV].key[V_KEY_PRESS].w - video_data[TEMPV].key[KEY_PRESS].s) * 50000 * chassis_speed_buff;
-    chassis_cmd_send.wz = video_data[TEMPV].key[V_KEY_PRESS].shift * 24000 * chassis_speed_buff;
+    chassis_cmd_send.vx = (video_data[TEMPV].key[V_KEY_PRESS].w - video_data[TEMPV].key[KEY_PRESS].s) * 35000 * chassis_speed_buff; // 系数待测
+    chassis_cmd_send.vy = (video_data[TEMPV].key[V_KEY_PRESS].d - video_data[TEMPV].key[KEY_PRESS].a) * 35000 * chassis_speed_buff;
+    chassis_cmd_send.wz = video_data[TEMPV].key[V_KEY_PRESS].shift * 1000 * chassis_speed_buff;
 
     gimbal_cmd_send.yaw -= (float)video_data[TEMPV].key_data.mouse_x / 660 * 2.5; // 系数待测
     gimbal_cmd_send.pitch += (float)video_data[TEMPV].key_data.mouse_y / 660 * 2.5;

@@ -217,6 +217,7 @@ static void SteeringWheelCalculate()
         at_rf = at_rf_last;
         at_lb = at_lb_last;
         at_rb = at_rb_last;
+        vt_lb = 0, vt_lf = 0, vt_rf = 0, vt_rb = 0;
     } else {
         // 生成预计算变量，减少计算量，空间换时间
         float w      = chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2;
@@ -385,7 +386,7 @@ void ChassisTask()
         case CHASSIS_FOLLOW_GIMBAL_YAW: // 跟随云台,单独设置pid
             // chassis_cmd_recv.wz = PIDCalculate(&chassis_follow_pid, chassis_cmd_recv.offset_angle, 0);
             if (chassis_cmd_recv.offset_angle > 2 || chassis_cmd_recv.offset_angle < -2) {
-                chassis_cmd_recv.wz = -0.08 * chassis_cmd_recv.offset_angle * abs(chassis_cmd_recv.offset_angle);
+                chassis_cmd_recv.wz = -0.1f * chassis_cmd_recv.offset_angle * abs(chassis_cmd_recv.offset_angle);
             }
             break;
         default:
