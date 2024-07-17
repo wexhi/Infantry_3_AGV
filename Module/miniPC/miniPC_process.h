@@ -19,8 +19,8 @@
 #define VISION_SEND_HEADER 0x5Au // 视觉发送数据帧头
 #define VISION_SEND_TAIL   0xAAu // 视觉发送数据帧尾
 
-#define VISION_RECV_SIZE   13u // 当前为固定值,12字节
-#define VISION_SEND_SIZE   24u
+#define VISION_RECV_SIZE   17u // 当前为固定值,12字节
+#define VISION_SEND_SIZE   22u
 
 // #pragma pack(1) // 1字节对齐
 
@@ -65,11 +65,9 @@ typedef struct
 /* 视觉通信初始化发送结构体 */
 typedef struct
 {
-    uint8_t header;        // 头帧校验位
-    uint8_t detect_color;  // 0-red 1-blue
-    uint8_t reset_tracker; // 是否重置追踪器 发0 bool is_shoot; // 是否开启自瞄模式 开发 1
-    uint8_t is_shoot;      // 是否开启自瞄模式 开发 1
-    uint8_t tail;          // 尾帧校验位
+    uint8_t header;       // 头帧校验位
+    uint8_t detect_color; // 0-red 1-blue
+    uint8_t tail;         // 尾帧校验位
 } Vision_Send_Init_Config_s;
 
 /* 视觉实例初始化配置结构体 */
@@ -89,6 +87,7 @@ typedef struct
     uint8_t is_shooting; // 有人在眼，先别急啊
     float yaw;
     float pitch;
+    float distance;
     uint16_t checksum;
 } Vision_Recv_s;
 
@@ -98,8 +97,6 @@ typedef struct
     uint8_t header;
     uint8_t is_energy_mode; // 0-瞄准装甲板，1-瞄准能量机关
     uint8_t detect_color;   // 0-red 1-blue 发1
-    uint8_t reset_tracker;  // 是否重置追踪器 发0
-    uint8_t is_shoot;       // 是否开启自瞄模式 开发 1
     float roll;             // rad
     float yaw;              // rad
     float pitch;            //

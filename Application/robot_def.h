@@ -30,7 +30,7 @@
 
 /* 机器人重要参数定义,注意根据不同机器人进行修改,浮点数需要以.0或f结尾,无符号以u结尾 */
 // 云台参数
-#define YAW_CHASSIS_ALIGN_ECD     3033  // 云台和底盘对齐指向相同方向时的电机编码器值,若对云台有机械改动需要修改
+#define YAW_CHASSIS_ALIGN_ECD     949  // 云台和底盘对齐指向相同方向时的电机编码器值,若对云台有机械改动需要修改
 #define YAW_ECD_GREATER_THAN_4096 0     // ALIGN_ECD值是否大于4096,是为1,否为0;用于计算云台偏转角度
 #define YAW_CHASSIS_REVERSE       1     // 当YAW解算角度取反时
 #define PITCH_HORIZON_ECD         2100  // 云台处于水平位置时编码器值,若对云台有机械改动需要修改
@@ -44,10 +44,10 @@
 // #define CHASSIS_OMNI_WHEEL // 是否为全向轮底盘
 // #define CHASSIS_MCNAMEE_WHEEL     // 是否为麦克纳姆轮底盘
 #define CHASSIS_STEERING_WHEEL               // 是否为舵轮
-#define STEERING_CHASSIS_ALIGN_ECD_LF   7630 // 舵电机 A 编码器值，若有机械改动需要修改
-#define STEERING_CHASSIS_ALIGN_ECD_LB   4089 // 舵电机 B 编码器值，若有机械改动需要修改
-#define STEERING_CHASSIS_ALIGN_ECD_RF   1402 // 舵电机 C 编码器值，若有机械改动需要修改
-#define STEERING_CHASSIS_ALIGN_ECD_RB   659  // 舵电机 D 编码器值，若有机械改动需要修改
+#define STEERING_CHASSIS_ALIGN_ECD_LF   7600 // 舵电机 A 编码器值，若有机械改动需要修改
+#define STEERING_CHASSIS_ALIGN_ECD_LB   4112 // 舵电机 B 编码器值，若有机械改动需要修改
+#define STEERING_CHASSIS_ALIGN_ECD_RF   1423 // 舵电机 C 编码器值，若有机械改动需要修改
+#define STEERING_CHASSIS_ALIGN_ECD_RB   760  // 舵电机 D 编码器值，若有机械改动需要修改
 
 #define STEERING_CHASSIS_ALIGN_ANGLE_LF STEERING_CHASSIS_ALIGN_ECD_LF / 8192.f * 360.f // 舵轮 A 对齐角度
 #define STEERING_CHASSIS_ALIGN_ANGLE_LB STEERING_CHASSIS_ALIGN_ECD_LB / 8192.f * 360.f // 舵轮 B 对齐角度

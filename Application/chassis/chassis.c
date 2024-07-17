@@ -53,15 +53,15 @@ void ChassisInit()
         .can_init_config.can_handle   = &hcan2,
         .controller_param_init_config = {
             .speed_PID = {
-                .Kp            = 4,   // 4.5
-                .Ki            = 0.1, // 0
+                .Kp            = 4.5, // 4.5
+                .Ki            = 0.2, // 0
                 .Kd            = 0,   // 0
                 .IntegralLimit = 5000,
                 .Improve       = PID_Trapezoid_Intergral | PID_Integral_Limit | PID_Derivative_On_Measurement,
                 .MaxOut        = 12000,
             },
             .current_PID = {
-                .Kp            = 0.6, // 0.4
+                .Kp            = 0.7, // 0.4
                 .Ki            = 0,   // 0
                 .Kd            = 0,
                 .IntegralLimit = 3000,
@@ -100,21 +100,21 @@ void ChassisInit()
         .controller_param_init_config = {
             .angle_PID = {
                 .Kp                = 9,
-                .Ki                = 0,
+                .Ki                = 1,
                 .Kd                = 0,
-                .CoefA             = 0.2,
-                .CoefB             = 0.3,
+                .CoefA             = 0.3,
+                .CoefB             = 0.4,
                 .Improve           = PID_Trapezoid_Intergral | PID_Integral_Limit | PID_Derivative_On_Measurement | PID_DerivativeFilter | PID_ChangingIntegrationRate,
-                .IntegralLimit     = 200,
+                .IntegralLimit     = 1000,
                 .MaxOut            = 4000,
-                .Derivative_LPF_RC = 0,
+                .Derivative_LPF_RC = 0.001,
             },
             .speed_PID = {
                 .Kp            = 38,
-                .Ki            = 2,
+                .Ki            = 3,
                 .Kd            = 0,
                 .Improve       = PID_Integral_Limit | PID_Derivative_On_Measurement | PID_ChangingIntegrationRate | PID_OutputFilter,
-                .IntegralLimit = 1000,
+                .IntegralLimit = 4000,
                 .MaxOut        = 20000,
                 .Output_LPF_RC = 0.03,
             },
@@ -138,13 +138,16 @@ void ChassisInit()
     motor_steering_rb                                   = DJIMotorInit(&chassis_motor_steering_config);
 
     PID_Init_Config_s chassis_follow_pid_conf = {
-        .Kp                = 1620,
-        .Ki                = 0.0f,
-        .Kd                = 3.0f,
-        .MaxOut            = 13000,
-        .DeadBand          = 0.1,
-        .Improve           = PID_DerivativeFilter | PID_Derivative_On_Measurement,
-        .Derivative_LPF_RC = 0.05,
+        .Kp                = 10, // 6
+        .Ki                = 1.0f,
+        .Kd                = 0.0f,
+        .DeadBand          = 2,
+        .CoefA             = 0.2,
+        .CoefB             = 0.3,
+        .Improve           = PID_Trapezoid_Intergral | PID_DerivativeFilter | PID_Derivative_On_Measurement | PID_Integral_Limit,
+        .IntegralLimit     = 50, // 100
+        .MaxOut            = 1000,
+        .Derivative_LPF_RC = 0.01,
     };
     PIDInit(&chassis_follow_pid, &chassis_follow_pid_conf);
 
@@ -384,10 +387,10 @@ void ChassisTask()
     // 根据控制模式设定旋转速度
     switch (chassis_cmd_recv.chassis_mode) {
         case CHASSIS_FOLLOW_GIMBAL_YAW: // 跟随云台,单独设置pid
-            // chassis_cmd_recv.wz = PIDCalculate(&chassis_follow_pid, chassis_cmd_recv.offset_angle, 0);
-            if (chassis_cmd_recv.offset_angle > 2 || chassis_cmd_recv.offset_angle < -2) {
-                chassis_cmd_recv.wz = -0.1f * chassis_cmd_recv.offset_angle * abs(chassis_cmd_recv.offset_angle);
-            }
+            chassis_cmd_recv.wz = PIDCalculate(&chassis_follow_pid, chassis_cmd_recv.offset_angle, 0);
+            // if (chassis_cmd_recv.offset_angle > 2 || chassis_cmd_recv.offset_angle < -2) {
+            //     chassis_cmd_recv.wz = -0.1f * chassis_cmd_recv.offset_angle * abs(chassis_cmd_recv.offset_angle);
+            // }
             break;
         default:
             break;

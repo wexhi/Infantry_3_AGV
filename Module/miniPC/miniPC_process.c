@@ -52,6 +52,7 @@ static void RecvProcess(Vision_Recv_s *recv, uint8_t *rx_buff)
     recv->is_shooting = rx_buff[2];
     memcpy(&recv->yaw, &rx_buff[3], 4);
     memcpy(&recv->pitch, &rx_buff[7], 4);
+    memcpy(&recv->distance, &rx_buff[11], 4);
 
     /* 视觉数据处理 */
     float yaw_total  = vision_instance->send_data->yaw; // 保存当前总角度
@@ -117,14 +118,14 @@ static void SendProcess(Vision_Send_s *send, uint8_t *tx_buff)
     tx_buff[0] = send->header;
     tx_buff[1] = send->is_energy_mode;
     tx_buff[2] = send->detect_color;
-    tx_buff[3] = send->reset_tracker;
-    tx_buff[4] = 1;
+    // tx_buff[3] = send->reset_tracker;
+    // tx_buff[4] = 1;
 
     /* 使用memcpy发送浮点型小数 */
-    memcpy(&tx_buff[5], &send->roll, 4);
-    memcpy(&tx_buff[9], &send->yaw, 4);
-    memcpy(&tx_buff[13], &send->pitch, 4);
-    memcpy(&tx_buff[17], &send->bullet_speed, 4);
+    memcpy(&tx_buff[3], &send->roll, 4);
+    memcpy(&tx_buff[7], &send->yaw, 4);
+    memcpy(&tx_buff[11], &send->pitch, 4);
+    memcpy(&tx_buff[15], &send->bullet_speed, 4);
 
     /* 发送校验位 */
     send->checksum = Get_CRC16_Check_Sum(&tx_buff[0], VISION_SEND_SIZE - 3u, CRC_INIT);
@@ -159,11 +160,9 @@ Vision_Send_s *VisionSendRegister(Vision_Send_Init_Config_s *send_config)
     Vision_Send_s *send_data = (Vision_Send_s *)malloc(sizeof(Vision_Send_s));
     memset(send_data, 0, sizeof(Vision_Send_s));
 
-    send_data->header        = send_config->header;
-    send_data->detect_color  = send_config->detect_color;
-    send_data->reset_tracker = send_config->reset_tracker;
-    send_data->is_shoot      = send_config->is_shoot;
-    send_data->tail          = send_config->tail;
+    send_data->header       = send_config->header;
+    send_data->detect_color = send_config->detect_color;
+    send_data->tail         = send_config->tail;
     return send_data;
 }
 
@@ -285,11 +284,9 @@ Vision_Recv_s *VisionInit(UART_HandleTypeDef *video_usart_handle)
     vision_instance->recv_data = VisionRecvRegister(&recv_config);
 
     Vision_Send_Init_Config_s send_config = {
-        .header        = VISION_SEND_HEADER,
-        .detect_color  = VISION_DETECT_COLOR_RED,
-        .reset_tracker = VISION_RESET_TRACKER_NO,
-        .is_shoot      = VISION_SHOOTING,
-        .tail          = VISION_SEND_TAIL,
+        .header       = VISION_SEND_HEADER,
+        .detect_color = VISION_DETECT_COLOR_RED,
+        .tail         = VISION_SEND_TAIL,
     };
     vision_instance->send_data = VisionSendRegister(&send_config);
     // 为master process注册daemon,用于判断视觉通信是否离线
