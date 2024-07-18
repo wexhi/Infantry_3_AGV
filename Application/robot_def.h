@@ -17,8 +17,8 @@
 
 /* 开发板类型定义,烧录时注意不要弄错对应功能;修改定义后需要重新编译,只能存在一个定义! */
 // #define ONE_BOARD // ! 单板控制整车，beta选项，建议别选上
-#define CHASSIS_BOARD // 底盘板
-// #define GIMBAL_BOARD // 云台板
+// #define CHASSIS_BOARD // 底盘板
+#define GIMBAL_BOARD // 云台板
 
 /* 机器人重要参数定义,注意根据不同机器人进行修改,浮点数需要以.0或f结尾,无符号以u结尾 */
 
@@ -30,12 +30,12 @@
 
 /* 机器人重要参数定义,注意根据不同机器人进行修改,浮点数需要以.0或f结尾,无符号以u结尾 */
 // 云台参数
-#define YAW_CHASSIS_ALIGN_ECD     289  // 云台和底盘对齐指向相同方向时的电机编码器值,若对云台有机械改动需要修改
+#define YAW_CHASSIS_ALIGN_ECD  289   // 云台和底盘对齐指向相同方向时的电机编码器值,若对云台有机械改动需要修改
 #define YAW_ECD_LESS_THAN_4096 1     // ALIGN_ECD值是否小于4096,是为1,否为0;用于计算云台偏转角度
-#define YAW_CHASSIS_REVERSE       1     // 当YAW解算角度取反时
-#define PITCH_HORIZON_ECD         2100  // 云台处于水平位置时编码器值,若对云台有机械改动需要修改
-#define PITCH_MAX_ANGLE           25.f  // 云台竖直方向最大角度 (注意反馈如果是陀螺仪，则填写陀螺仪的角度)
-#define PITCH_MIN_ANGLE           -30.f // 云台竖直方向最小角度 (注意反馈如果是陀螺仪，则填写陀螺仪的角度)
+#define YAW_CHASSIS_REVERSE    1     // 当YAW解算角度取反时
+#define PITCH_HORIZON_ECD      2100  // 云台处于水平位置时编码器值,若对云台有机械改动需要修改
+#define PITCH_MAX_ANGLE        28.f  // 云台竖直方向最大角度 (注意反馈如果是陀螺仪，则填写陀螺仪的角度)
+#define PITCH_MIN_ANGLE        -18.f // 云台竖直方向最小角度 (注意反馈如果是陀螺仪，则填写陀螺仪的角度)
 // 发射参数
 #define ONE_BULLET_DELTA_ANGLE 45    // 发射一发弹丸拨盘转动的距离,由机械设计图纸给出
 #define REDUCTION_RATIO_LOADER 36.0f // 拨盘电机的减速比,英雄需要修改为3508的19.0f

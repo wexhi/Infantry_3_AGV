@@ -208,7 +208,7 @@ static void RemoteControlSet(void)
 {
     robot_state                     = ROBOT_READY;
     shoot_cmd_send.shoot_mode       = SHOOT_ON;
-    chassis_cmd_send.chassis_mode   = CHASSIS_FOLLOW_GIMBAL_YAW; // 底盘模式
+    chassis_cmd_send.chassis_mode   = CHASSIS_SLOW; // 底盘模式
     gimbal_cmd_send.gimbal_mode     = GIMBAL_GYRO_MODE;
     chassis_cmd_send.super_cap_mode = SUPER_CAP_ON;
 
@@ -216,7 +216,7 @@ static void RemoteControlSet(void)
     if (switch_is_down(rc_data[TEMP].rc.switch_left) || !vision_ctrl->is_tracking) {
         // 按照摇杆的输出大小进行角度增量,增益系数需调整
         gimbal_cmd_send.yaw -= 0.001f * (float)rc_data[TEMP].rc.rocker_r_;
-        gimbal_cmd_send.pitch -= 0.0005f * (float)rc_data[TEMP].rc.rocker_r1;
+        gimbal_cmd_send.pitch += 0.0003f * (float)rc_data[TEMP].rc.rocker_r1;
     }
 
     // 云台参数,确定云台控制数据

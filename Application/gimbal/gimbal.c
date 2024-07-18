@@ -29,25 +29,25 @@ void GimbalInit()
         },
         .controller_param_init_config = {
             .angle_PID = {
-                .Kp                = 0.885,
-                .Ki                = 0.415,
-                .Kd                = 0.022,
+                .Kp                = 1.18,
+                .Ki                = 0.715,
+                .Kd                = 0.01,
                 .Improve           = PID_Trapezoid_Intergral | PID_Integral_Limit | PID_Derivative_On_Measurement | PID_DerivativeFilter | PID_ChangingIntegrationRate,
-                .IntegralLimit     = 160,
+                .IntegralLimit     = 260,
                 .CoefB             = 0.6,
-                .CoefA             = 0.4,
-                .MaxOut            = 800,
-                .Derivative_LPF_RC = 0.025,
+                .CoefA             = 0.2,
+                .MaxOut            = 1000,
+                .Derivative_LPF_RC = 0.015,
             },
             .speed_PID = {
-                .Kp            = 15500,
-                .Ki            = 1400,
+                .Kp            = 16500,
+                .Ki            = 2400,
                 .Kd            = 0,
                 .CoefB         = 0.3,
                 .CoefA         = 0.2,
                 .Improve       = PID_Trapezoid_Intergral | PID_Integral_Limit | PID_Derivative_On_Measurement | PID_ChangingIntegrationRate,
-                .IntegralLimit = 1000,
-                .MaxOut        = 25000,
+                .IntegralLimit = 4000,
+                .MaxOut        = 27000,
             },
             .other_angle_feedback_ptr = &gimba_IMU_data->YawTotalAngle,
             // 还需要增加角速度额外反馈指针,注意方向,ins_task.md中有c板的bodyframe坐标系说明
@@ -113,7 +113,7 @@ void GimbalInit()
     gimbal_pub = PubRegister("gimbal_feed", sizeof(Gimbal_Upload_Data_s));
     gimbal_sub = SubRegister("gimbal_cmd", sizeof(Gimbal_Ctrl_Cmd_s));
 }
-
+// float yaw_test = 0;
 /* 机器人云台控制核心任务,后续考虑只保留IMU控制,不再需要电机的反馈 */
 void GimbalTask()
 {
@@ -122,7 +122,7 @@ void GimbalTask()
     SubGetMessage(gimbal_sub, &gimbal_cmd_recv);
     // TEST CODE IN HERE
     // gimbal_cmd_recv.gimbal_mode = GIMBAL_ZERO_FORCE;
-    yaw_target        = gimbal_cmd_recv.yaw;
+    // yaw_target        = yaw_test;
     yaw_current       = gimba_IMU_data->YawTotalAngle;
     pitch_target      = gimbal_cmd_recv.pitch;
     pitch_current     = gimba_IMU_data->Roll;
@@ -167,6 +167,7 @@ void GimbalTask()
             LKMotorChangeFeed(pitch_motor, ANGLE_LOOP, OTHER_FEED, &gimba_IMU_data->Roll);
             LKMotorChangeFeed(pitch_motor, SPEED_LOOP, OTHER_FEED, &gimba_IMU_data->Gyro[1]);
             DJIMotorSetRef(yaw_motor, gimbal_cmd_recv.yaw); // yaw和pitch会在robot_cmd中处理好多圈和单圈
+            // DJIMotorSetRef(yaw_motor, yaw_target); // yaw和pitch会在robot_cmd中处理好多圈和单圈
             LKMotorSetRef(pitch_motor, gimbal_cmd_recv.pitch);
             break;
         // 云台自由模式,使用编码器反馈,底盘和云台分离,仅云台旋转,一般用于调整云台姿态(英雄吊射等)/能量机关
