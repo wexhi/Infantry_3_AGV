@@ -138,16 +138,16 @@ void ChassisInit()
     motor_steering_rb                                   = DJIMotorInit(&chassis_motor_steering_config);
 
     PID_Init_Config_s chassis_follow_pid_conf = {
-        .Kp                = 10, // 6
-        .Ki                = 1.0f,
-        .Kd                = 0.0f,
-        .DeadBand          = 2,
+        .Kp                = 12, // 6
+        .Ki                = 3.0f,
+        .Kd                = 0.015f, // 0.5
+        .DeadBand          = 0.5,
         .CoefA             = 0.2,
         .CoefB             = 0.3,
-        .Improve           = PID_Trapezoid_Intergral | PID_DerivativeFilter | PID_Derivative_On_Measurement | PID_Integral_Limit,
-        .IntegralLimit     = 50, // 100
-        .MaxOut            = 1000,
-        .Derivative_LPF_RC = 0.01,
+        .Improve           = PID_Trapezoid_Intergral | PID_DerivativeFilter | PID_DerivativeFilter | PID_Derivative_On_Measurement | PID_Integral_Limit | PID_Derivative_On_Measurement,
+        .IntegralLimit     = 50, // 200
+        .MaxOut            = 1200,
+        .Derivative_LPF_RC = 0.01, // 0.01
     };
     PIDInit(&chassis_follow_pid, &chassis_follow_pid_conf);
 
@@ -214,7 +214,10 @@ static void SteeringWheelCalculate()
 {
     float offset_lf, offset_rf, offset_lb, offset_rb;     // 用于计算舵轮的角度
     float at_lf_last, at_rf_last, at_lb_last, at_rb_last; // 上次的角度
-    at_lb_last = at_lb, at_lf_last = at_lf, at_rf_last = at_rf, at_rb_last = at_rb;
+    at_lb_last = motor_steering_lb->measure.total_angle;
+    at_lf_last = motor_steering_lf->measure.total_angle;
+    at_rf_last = motor_steering_rf->measure.total_angle;
+    at_rb_last = motor_steering_rb->measure.total_angle;
     if (chassis_vx == 0 && chassis_vy == 0 && chassis_cmd_recv.wz == 0) {
         at_lf = at_lf_last;
         at_rf = at_rf_last;
