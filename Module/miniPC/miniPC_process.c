@@ -83,11 +83,12 @@ static void VisionOfflineCallback(void *id)
  * @param roll
  * @param bullet_speed
  */
-void VisionSetAltitude(float yaw, float pitch, float roll, float bullet_speed)
+void VisionSetAltitude(float yaw, float pitch, float roll, float bullet_speed, float yaw_speed)
 {
-    vision_instance->send_data->yaw   = yaw;
-    vision_instance->send_data->pitch = pitch;
-    vision_instance->send_data->roll  = roll;
+    vision_instance->send_data->yaw       = yaw;
+    vision_instance->send_data->pitch     = pitch;
+    vision_instance->send_data->roll      = roll;
+    vision_instance->send_data->yaw_speed = yaw_speed;
     if (bullet_speed > 0) {
         vision_instance->send_data->bullet_speed = bullet_speed;
     } else {
@@ -126,6 +127,7 @@ static void SendProcess(Vision_Send_s *send, uint8_t *tx_buff)
     memcpy(&tx_buff[7], &send->yaw, 4);
     memcpy(&tx_buff[11], &send->pitch, 4);
     memcpy(&tx_buff[15], &send->bullet_speed, 4);
+    memcpy(&tx_buff[19], &send->yaw_speed, 4);
 
     /* 发送校验位 */
     send->checksum = Get_CRC16_Check_Sum(&tx_buff[0], VISION_SEND_SIZE - 3u, CRC_INIT);

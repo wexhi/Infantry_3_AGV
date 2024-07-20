@@ -147,13 +147,14 @@ void RobotCMDTask(void)
     }
 
     // 设置视觉发送数据,还需增加加速度和角速度数据
-    static float yaw, pitch, roll, bullet_speed;
+    static float yaw, pitch, roll, bullet_speed, yaw_speed;
     yaw          = gimbal_fetch_data.gimbal_imu_data.YawTotalAngle;
     pitch        = gimbal_fetch_data.gimbal_imu_data.Roll;
     roll         = gimbal_fetch_data.gimbal_imu_data.Pitch;
     bullet_speed = chassis_fetch_data.bullet_speed;
+    yaw_speed    = gimbal_fetch_data.gimbal_imu_data.Gyro[2];
 
-    VisionSetAltitude(yaw, pitch, roll, bullet_speed);
+    VisionSetAltitude(yaw, pitch, roll, bullet_speed, yaw_speed);
 
     // 发送控制信息
     // 推送消息,双板通信,视觉通信等
@@ -257,6 +258,9 @@ static void RemoteControlSet(void)
     if (switch_is_up(rc_data[TEMP].rc.switch_left))
         shoot_cmd_send.load_mode = LOAD_MEDIUM;
     else
+        shoot_cmd_send.load_mode = LOAD_STOP;
+
+    if (vision_ctrl->is_shooting == 0)
         shoot_cmd_send.load_mode = LOAD_STOP;
 
     // 射频控制,固定每秒1发,后续可以根据左侧拨轮的值大小切换射频,
@@ -427,7 +431,7 @@ static void MouseKeySet(void)
 
     if (chassis_fetch_data.current_HP == 0) {
         // 下面是为了处理图传链路死亡时的bug,当死亡时图传链路不会继续更新数据，因此我们只需跳出
-        gimbal_cmd_send.yaw = gimbal_fetch_data.gimbal_imu_data.YawTotalAngle;
+        gimbal_cmd_send.yaw   = gimbal_fetch_data.gimbal_imu_data.YawTotalAngle;
         gimbal_cmd_send.pitch = gimbal_fetch_data.gimbal_imu_data.Roll;
         return;
     }

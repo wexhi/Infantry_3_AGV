@@ -324,8 +324,9 @@ static void LimitChassisOutput()
         SuperCapSet(referee_data->PowerHeatData.buffer_energy, referee_data->GameRobotState.chassis_power_limit, 3); // 设置超级电容数据
         P_limit = 1;
     }
-
-    if (chassis_cmd_recv.super_cap_mode == SUPER_CAP_FORCE_ON) {
+    // 当超级电容强制开启且血量大于50%时，强制开启超级电容
+    if (chassis_cmd_recv.super_cap_mode == SUPER_CAP_FORCE_ON &&
+        (referee_data->GameRobotState.current_HP / referee_data->GameRobotState.maximum_HP) > 0.5) {
         P_limit = 1;
         SuperCapSet(referee_data->PowerHeatData.buffer_energy, referee_data->GameRobotState.chassis_power_limit, 3); // 设置超级电容数据
     }

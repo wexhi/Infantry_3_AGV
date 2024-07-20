@@ -20,7 +20,7 @@
 #define VISION_SEND_TAIL   0xAAu // 视觉发送数据帧尾
 
 #define VISION_RECV_SIZE   17u // 当前为固定值,12字节
-#define VISION_SEND_SIZE   22u
+#define VISION_SEND_SIZE   26u
 
 // #pragma pack(1) // 1字节对齐
 
@@ -101,6 +101,7 @@ typedef struct
     float yaw;              // rad
     float pitch;            //
     float bullet_speed;     // 弹速
+    float yaw_speed;        // yaw速度
     uint16_t checksum;      // crc16校验位 https://blog.csdn.net/ydyuse/article/details/105395368
     uint8_t tail;           // 尾帧校验位
 } Vision_Send_s;
@@ -154,7 +155,7 @@ void VisionSend();
  * @param roll
  * @param bullet_speed
  */
-void VisionSetAltitude(float yaw, float pitch, float roll, float bullet_speed);
+void VisionSetAltitude(float yaw, float pitch, float roll, float bullet_speed, float yaw_speed);
 
 void VisionSetEnergy(uint8_t is_energy_mode);
 
