@@ -69,9 +69,9 @@ void GimbalInit()
         },
         .controller_param_init_config = {
             .angle_PID = {
-                .Kp                = 0.6,
+                .Kp                = 0.5,
                 .Ki                = 0.01,
-                .Kd                = 0.0135,
+                .Kd                = 0.003,
                 .Improve           = PID_Trapezoid_Intergral | PID_Integral_Limit | PID_Derivative_On_Measurement | PID_ChangingIntegrationRate | PID_OutputFilter,
                 .IntegralLimit     = 10,
                 .CoefB             = 0.1,
@@ -81,15 +81,15 @@ void GimbalInit()
                 .Output_LPF_RC     = 0.05,
             },
             .speed_PID = {
-                .Kp            = 280,
-                .Ki            = 200,
+                .Kp            = 220,
+                .Ki            = 100,
                 .Kd            = 0,
                 .CoefB         = 0.4,
                 .CoefA         = 0.2,
                 .Improve       = PID_Trapezoid_Intergral | PID_Integral_Limit | PID_Derivative_On_Measurement | PID_ChangingIntegrationRate | PID_OutputFilter,
-                .IntegralLimit = 800,
-                .MaxOut        = 20000,
-                .Output_LPF_RC = 0.001f,
+                .IntegralLimit = 1000,
+                .MaxOut        = 18000,
+                .Output_LPF_RC = 0.002f,
             },
             .other_angle_feedback_ptr = &gimba_IMU_data->Roll,
             // 还需要增加角速度额外反馈指针,注意方向,ins_task.md中有c板的bodyframe坐标系说明

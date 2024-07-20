@@ -58,7 +58,7 @@ void ChassisInit()
                 .Kd            = 0,   // 0
                 .IntegralLimit = 5000,
                 .Improve       = PID_Trapezoid_Intergral | PID_Integral_Limit | PID_Derivative_On_Measurement,
-                .MaxOut        = 12000,
+                .MaxOut        = 40000,
             },
             .current_PID = {
                 .Kp            = 0.7, // 0.4
@@ -228,19 +228,19 @@ static void SteeringWheelCalculate()
         // 生成预计算变量，减少计算量，空间换时间
         float w      = chassis_cmd_recv.wz * CHASSIS_WHEEL_OFFSET * SQRT2;
         float temp_x = chassis_vx - w, temp_y = chassis_vy - w;
-        arm_sqrt_f32(temp_x * temp_x + temp_y * temp_y, &vt_lf); // x-w , y-
+        arm_sqrt_f32(temp_x * temp_x + temp_y * temp_y, &vt_lf); // lf：y- , x-
         temp_y = chassis_vy + w;                                 // 重复利用变量,temp_x = chassis_vy - w;与上次相同因此注释
-        arm_sqrt_f32(temp_x * temp_x + temp_y * temp_y, &vt_rf); // x- , y+
+        arm_sqrt_f32(temp_x * temp_x + temp_y * temp_y, &vt_lb); // lb: y+ , x-
         temp_x = chassis_vx + w;                                 // temp_y = chassis_vx + w;与上次相同因此注释
-        arm_sqrt_f32(temp_x * temp_x + temp_y * temp_y, &vt_lb); // x+ , y+
+        arm_sqrt_f32(temp_x * temp_x + temp_y * temp_y, &vt_rb); // rb: y+ , x+
         temp_y = chassis_vy - w;                                 // temp_x = chassis_vy + w;与上次相同因此注释
-        arm_sqrt_f32(temp_x * temp_x + temp_y * temp_y, &vt_rb); // x+ , y-
+        arm_sqrt_f32(temp_x * temp_x + temp_y * temp_y, &vt_rf); // rf: y- , x+
 
         // 计算角度偏移
-        offset_lf = atan2f(chassis_vy - w, chassis_vx - w) * RAD_2_DEGREE;
-        offset_rf = atan2f(chassis_vy - w, chassis_vx + w) * RAD_2_DEGREE;
-        offset_lb = atan2f(chassis_vy + w, chassis_vx - w) * RAD_2_DEGREE;
-        offset_rb = atan2f(chassis_vy + w, chassis_vx + w) * RAD_2_DEGREE;
+        offset_lf = atan2f(chassis_vy - w, chassis_vx - w) * RAD_2_DEGREE; // lf:  y- , x-
+        offset_rf = atan2f(chassis_vy - w, chassis_vx + w) * RAD_2_DEGREE; // rf:  y- , x+
+        offset_lb = atan2f(chassis_vy + w, chassis_vx - w) * RAD_2_DEGREE; // lb:  y+ , x-
+        offset_rb = atan2f(chassis_vy + w, chassis_vx + w) * RAD_2_DEGREE; // rb:  y+ , x+
 
         at_lf = STEERING_CHASSIS_ALIGN_ANGLE_LF + offset_lf; // 此处似乎不需要加上真实角度，因为我们需要的是绝对角度而不是相对角度
         at_rf = STEERING_CHASSIS_ALIGN_ANGLE_RF + offset_rf;
@@ -289,7 +289,6 @@ static void SteeringWheelCalculate()
  * @brief
  *
  */
-// ** /
 static void LimitChassisOutput()
 {
     // 功率限制待添加
@@ -308,6 +307,8 @@ static void LimitChassisOutput()
             break;
     }
 
+    // 当前没接上超电此处先行注释
+
     if (chassis_cmd_recv.super_cap_mode == SUPER_CAP_OFF || super_cap->cap_data.voltage <= 12.f) {
         // 当电容电量过低时强制关闭超电
         chassis_cmd_recv.super_cap_mode = SUPER_CAP_OFF;
@@ -323,6 +324,12 @@ static void LimitChassisOutput()
         SuperCapSet(referee_data->PowerHeatData.buffer_energy, referee_data->GameRobotState.chassis_power_limit, 3); // 设置超级电容数据
         P_limit = 1;
     }
+
+    if (chassis_cmd_recv.super_cap_mode == SUPER_CAP_FORCE_ON) {
+        P_limit = 1;
+        SuperCapSet(referee_data->PowerHeatData.buffer_energy, referee_data->GameRobotState.chassis_power_limit, 3); // 设置超级电容数据
+    }
+
     ui_data.Chassis_Power_Data.chassis_power_mx = super_cap->cap_data.voltage;
     SuperCapSend(); // 发送超级电容数据
 
@@ -417,6 +424,7 @@ void ChassisTask()
     // 根据电机的反馈速度和IMU(如果有)计算真实速度
     EstimateSpeed();
 
+    chassis_feedback_data.current_HP   = referee_data->GameRobotState.current_HP;
     chassis_feedback_data.shoot_heat   = referee_data->PowerHeatData.shooter_17mm_1_barrel_heat;
     chassis_feedback_data.shoot_limit  = referee_data->GameRobotState.shooter_barrel_heat_limit;
     chassis_feedback_data.bullet_speed = referee_data->ShootData.bullet_speed;
