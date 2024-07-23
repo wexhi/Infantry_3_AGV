@@ -142,10 +142,10 @@ void RobotCMDTask(void)
     {
         RemoteControlSet();
     } else if (switch_is_up(rc_data[TEMP].rc.switch_right)) {
-        // EmergencyHandler();
-        RemoteMouseKeySet();
+        EmergencyHandler();
+        // RemoteMouseKeySet();
     }
-
+    // EmergencyHandler();
     // 设置视觉发送数据,还需增加加速度和角速度数据
     static float yaw, pitch, roll, bullet_speed, yaw_speed;
     yaw          = gimbal_fetch_data.gimbal_imu_data.YawTotalAngle;
