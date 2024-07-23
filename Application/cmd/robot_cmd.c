@@ -142,8 +142,8 @@ void RobotCMDTask(void)
     {
         RemoteControlSet();
     } else if (switch_is_up(rc_data[TEMP].rc.switch_right)) {
-        EmergencyHandler();
-        // RemoteMouseKeySet();
+        // EmergencyHandler();
+        RemoteMouseKeySet();
     }
 
     // 设置视觉发送数据,还需增加加速度和角速度数据
@@ -213,7 +213,7 @@ static void RemoteControlSet(void)
 {
     robot_state                     = ROBOT_READY;
     shoot_cmd_send.shoot_mode       = SHOOT_ON;
-    chassis_cmd_send.chassis_mode   = CHASSIS_FOLLOW_GIMBAL_YAW; // 底盘模式
+    chassis_cmd_send.chassis_mode   = CHASSIS_SLOW; // 底盘模式
     gimbal_cmd_send.gimbal_mode     = GIMBAL_GYRO_MODE;
     chassis_cmd_send.super_cap_mode = SUPER_CAP_ON;
 
@@ -240,7 +240,7 @@ static void RemoteControlSet(void)
     // max 70.f,参数过大会达到电机的峰值速度，导致底盘漂移等问题，且毫无意义
     chassis_cmd_send.vx = 100.0f * (float)rc_data[TEMP].rc.rocker_l1; // 1水平方向
     chassis_cmd_send.vy = 100.0f * (float)rc_data[TEMP].rc.rocker_l_; // _竖直方向
-    // chassis_cmd_send.wz = -30.0f * (float)rc_data[TEMP].rc.dial;
+    chassis_cmd_send.wz = -5.0f * (float)rc_data[TEMP].rc.dial;
 
     // 发射参数
     if (switch_is_down(rc_data[TEMP].rc.switch_left)) // 左侧开关状态[上],弹舱打开
@@ -269,7 +269,7 @@ static void RemoteControlSet(void)
 
 static void RemoteMouseKeySet(void)
 {
-    // switch (video_data[TEMPV].key_count[V_KEY_PRESS_WITH_CTRL][V_Key_X] % 2) {
+    // switch (video_data[TEMP].key_count[V_KEY_PRESS_WITH_CTRL][V_Key_X] % 2) {
     //     case 0:
     //         EmergencyHandler();
     //         return; // 当没有按下激活键时,直接返回
@@ -295,10 +295,10 @@ static void RemoteMouseKeySet(void)
             break;
         default:
         case 2:
-            chassis_speed_buff = 6.f;
+            chassis_speed_buff = 6.8f;
             // chassis_cmd_send.chassis_mode   = CHASSIS_FAST;
             chassis_cmd_send.chassis_mode   = CHASSIS_FOLLOW_GIMBAL_YAW;
-            chassis_cmd_send.super_cap_mode = SUPER_CAP_ON;
+            chassis_cmd_send.super_cap_mode = SUPER_CAP_FORCE_ON;
             break;
     }
 
@@ -309,9 +309,65 @@ static void RemoteMouseKeySet(void)
         chassis_cmd_send.super_cap_mode = SUPER_CAP_ON;
     }
 
-    chassis_cmd_send.vx = (rc_data[TEMP].key[KEY_PRESS].w - rc_data[TEMP].key[KEY_PRESS].s) * 35000 * chassis_speed_buff; // 系数待测
-    chassis_cmd_send.vy = (rc_data[TEMP].key[KEY_PRESS].d - rc_data[TEMP].key[KEY_PRESS].a) * 35000 * chassis_speed_buff;
-    chassis_cmd_send.wz = rc_data[TEMP].key[KEY_PRESS].shift * 1000 * chassis_speed_buff;
+    // chassis_cmd_send.vx = (video_data[TEMP].key[KEY_PRESS].w - video_data[TEMP].key[KEY_PRESS].s) * 35000 * chassis_speed_buff; // 系数待测
+    // chassis_cmd_send.vy = (video_data[TEMP].key[KEY_PRESS].d - video_data[TEMP].key[KEY_PRESS].a) * 35000 * chassis_speed_buff;
+    // chassis_cmd_send.wz = video_data[TEMP].key[KEY_PRESS].shift * 1000 * chassis_speed_buff;
+
+    if (rc_data[TEMP].key[KEY_PRESS].w) {
+        forward_speed += SPEED_UP_RATE;
+    } else {
+        if (forward_speed > CHASSIS_VX_MAX / 4) {
+            forward_speed -= SPEED_DOWN_RATE * 4;
+        } else {
+            forward_speed -= SPEED_DOWN_RATE / 2;
+        }
+    }
+    if (rc_data[TEMP].key[KEY_PRESS].s) {
+        back_speed += SPEED_UP_RATE;
+    } else {
+        if (back_speed > CHASSIS_VX_MAX / 4) {
+            back_speed -= SPEED_DOWN_RATE * 4;
+        } else {
+            back_speed -= SPEED_DOWN_RATE / 2;
+        }
+    }
+    if (rc_data[TEMP].key[KEY_PRESS].a) {
+        left_speed += SPEED_UP_RATE;
+    } else {
+        if (left_speed > CHASSIS_VY_MAX / 4) {
+            left_speed -= SPEED_DOWN_RATE * 4;
+        } else {
+            left_speed -= SPEED_DOWN_RATE / 2;
+        }
+    }
+    if (rc_data[TEMP].key[KEY_PRESS].d) {
+        right_speed += SPEED_UP_RATE;
+    } else {
+        if (right_speed > CHASSIS_VY_MAX / 4) {
+            right_speed -= SPEED_DOWN_RATE * 4;
+        } else {
+            right_speed -= SPEED_DOWN_RATE / 2;
+        }
+    }
+    if (rc_data[TEMP].key[KEY_PRESS].shift) {
+        chassis_cmd_send.wz += 5;
+    } else {
+        chassis_cmd_send.wz = 0;
+    }
+
+    if (forward_speed < 0) forward_speed = 0;
+    if (back_speed < 0) back_speed = 0;
+    if (left_speed < 0) left_speed = 0;
+    if (right_speed < 0) right_speed = 0;
+
+    chassis_cmd_send.vx = forward_speed - back_speed;
+    chassis_cmd_send.vy = right_speed - left_speed;
+
+    if (chassis_cmd_send.vx > CHASSIS_VX_MAX * chassis_speed_buff) chassis_cmd_send.vx = CHASSIS_VX_MAX * chassis_speed_buff;
+    if (chassis_cmd_send.vx < -CHASSIS_VX_MAX * chassis_speed_buff) chassis_cmd_send.vx = -CHASSIS_VX_MAX * chassis_speed_buff;
+    if (chassis_cmd_send.vy > CHASSIS_VY_MAX * chassis_speed_buff) chassis_cmd_send.vy = CHASSIS_VY_MAX * chassis_speed_buff;
+    if (chassis_cmd_send.vy < -CHASSIS_VY_MAX * chassis_speed_buff) chassis_cmd_send.vy = -CHASSIS_VY_MAX * chassis_speed_buff;
+    if (chassis_cmd_send.wz > CHASSIS_WZ_MAX * chassis_speed_buff) chassis_cmd_send.wz = CHASSIS_WZ_MAX * chassis_speed_buff;
 
     gimbal_cmd_send.yaw -= (float)rc_data[TEMP].mouse.x / 660 * 2.5; // 系数待测
     gimbal_cmd_send.pitch += (float)rc_data[TEMP].mouse.y / 660 * 2.5;
@@ -398,6 +454,19 @@ static void RemoteMouseKeySet(void)
         shoot_cmd_send.rest_heat <= 0) {
         shoot_cmd_send.load_mode = LOAD_STOP;
     }
+
+    switch (rc_data[TEMP].key_count[KEY_PRESS][Key_E] % 2) {
+        case 0:
+            shoot_cmd_send.lid_mode = LID_CLOSE;
+            break;
+        case 1:
+            shoot_cmd_send.lid_mode = LID_OPEN;
+            if (vision_ctrl->is_shooting == 0) {
+                shoot_cmd_send.load_mode = LOAD_STOP;
+            }
+            break;
+    }
+
     // 这行代码在演
     // if (vision_ctrl->is_shooting == 0 && vision_ctrl->is_tracking == 1 &&
     //     rc_data[TEMP].mouse.press_r) {
@@ -410,15 +479,15 @@ static void RemoteMouseKeySet(void)
         chassis_cmd_send.loader_mode = LOAD_REVERSE;
     }
 
-    switch (rc_data[TEMP].key_count[KEY_PRESS][Key_E] % 2) // E键开关弹舱
-    {
-        case 0:
-            shoot_cmd_send.lid_mode = LID_CLOSE;
-            break;
-        default:
-            shoot_cmd_send.lid_mode = LID_OPEN;
-            break;
-    }
+    // switch (video_data[TEMP].key_count[KEY_PRESS][V_Key_E] % 2) // E键开关弹舱
+    // {
+    //     case 0:
+    //         shoot_cmd_send.lid_mode = LID_CLOSE;
+    //         break;
+    //     default:
+    //         shoot_cmd_send.lid_mode = LID_OPEN;
+    //         break;
+    // }
 }
 
 /**
@@ -441,7 +510,7 @@ static void MouseKeySet(void)
     gimbal_cmd_send.gimbal_mode = GIMBAL_GYRO_MODE;
 
 #ifdef VIDEO_LINK
-    // switch (video_data[TEMPV].key_count[V_KEY_PRESS_WITH_CTRL][V_Key_X] % 2) {
+    // switch (video_data[TEMP].key_count[V_KEY_PRESS_WITH_CTRL][V_Key_X] % 2) {
     //     case 0:
     //         EmergencyHandler();
     //         return; // 当没有按下激活键时,直接返回
@@ -449,7 +518,7 @@ static void MouseKeySet(void)
     //         break; // 当按下激活键时,继续执行
     // }
 
-    switch (video_data[TEMPV].key_count[V_KEY_PRESS][V_Key_C] % 3) {
+    switch (video_data[TEMP].key_count[KEY_PRESS][Key_C] % 3) {
         case 0:
             chassis_speed_buff              = 0.8f;
             chassis_cmd_send.chassis_mode   = CHASSIS_SLOW;
@@ -470,17 +539,17 @@ static void MouseKeySet(void)
     }
 
     // 若在底盘跟随云台模式下按住shift键，则强制改为小陀螺模式
-    if (video_data[TEMPV].key[V_KEY_PRESS].shift && chassis_cmd_send.chassis_mode == CHASSIS_FOLLOW_GIMBAL_YAW) {
+    if (video_data[TEMP].key[KEY_PRESS].shift && chassis_cmd_send.chassis_mode == CHASSIS_FOLLOW_GIMBAL_YAW) {
         chassis_speed_buff              = 1.2f;
         chassis_cmd_send.chassis_mode   = CHASSIS_MEDIUM;
         chassis_cmd_send.super_cap_mode = SUPER_CAP_ON;
     }
 
-    // chassis_cmd_send.vx = (video_data[TEMPV].key[V_KEY_PRESS].w - video_data[TEMPV].key[KEY_PRESS].s) * 35000 * chassis_speed_buff; // 系数待测
-    // chassis_cmd_send.vy = (video_data[TEMPV].key[V_KEY_PRESS].d - video_data[TEMPV].key[KEY_PRESS].a) * 35000 * chassis_speed_buff;
-    // chassis_cmd_send.wz = video_data[TEMPV].key[V_KEY_PRESS].shift * 1000 * chassis_speed_buff;
+    // chassis_cmd_send.vx = (video_data[TEMP].key[KEY_PRESS].w - video_data[TEMP].key[KEY_PRESS].s) * 35000 * chassis_speed_buff; // 系数待测
+    // chassis_cmd_send.vy = (video_data[TEMP].key[KEY_PRESS].d - video_data[TEMP].key[KEY_PRESS].a) * 35000 * chassis_speed_buff;
+    // chassis_cmd_send.wz = video_data[TEMP].key[KEY_PRESS].shift * 1000 * chassis_speed_buff;
 
-    if (video_data[TEMPV].key[V_KEY_PRESS].w) {
+    if (video_data[TEMP].key[KEY_PRESS].w) {
         forward_speed += SPEED_UP_RATE;
     } else {
         if (forward_speed > CHASSIS_VX_MAX / 4) {
@@ -489,7 +558,7 @@ static void MouseKeySet(void)
             forward_speed -= SPEED_DOWN_RATE / 2;
         }
     }
-    if (video_data[TEMPV].key[V_KEY_PRESS].s) {
+    if (video_data[TEMP].key[KEY_PRESS].s) {
         back_speed += SPEED_UP_RATE;
     } else {
         if (back_speed > CHASSIS_VX_MAX / 4) {
@@ -498,7 +567,7 @@ static void MouseKeySet(void)
             back_speed -= SPEED_DOWN_RATE / 2;
         }
     }
-    if (video_data[TEMPV].key[V_KEY_PRESS].a) {
+    if (video_data[TEMP].key[KEY_PRESS].a) {
         left_speed += SPEED_UP_RATE;
     } else {
         if (left_speed > CHASSIS_VY_MAX / 4) {
@@ -507,7 +576,7 @@ static void MouseKeySet(void)
             left_speed -= SPEED_DOWN_RATE / 2;
         }
     }
-    if (video_data[TEMPV].key[V_KEY_PRESS].d) {
+    if (video_data[TEMP].key[KEY_PRESS].d) {
         right_speed += SPEED_UP_RATE;
     } else {
         if (right_speed > CHASSIS_VY_MAX / 4) {
@@ -516,7 +585,7 @@ static void MouseKeySet(void)
             right_speed -= SPEED_DOWN_RATE / 2;
         }
     }
-    if (video_data[TEMPV].key[V_KEY_PRESS].shift) {
+    if (video_data[TEMP].key[KEY_PRESS].shift) {
         chassis_cmd_send.wz += 5;
     } else {
         chassis_cmd_send.wz = 0;
@@ -536,10 +605,10 @@ static void MouseKeySet(void)
     if (chassis_cmd_send.vy < -CHASSIS_VY_MAX * chassis_speed_buff) chassis_cmd_send.vy = -CHASSIS_VY_MAX * chassis_speed_buff;
     if (chassis_cmd_send.wz > CHASSIS_WZ_MAX * chassis_speed_buff) chassis_cmd_send.wz = CHASSIS_WZ_MAX * chassis_speed_buff;
 
-    gimbal_cmd_send.yaw -= (float)video_data[TEMPV].key_data.mouse_x / 660 * 2.5; // 系数待测
-    gimbal_cmd_send.pitch += (float)video_data[TEMPV].key_data.mouse_y / 660 * 2.5;
+    gimbal_cmd_send.yaw -= (float)video_data[TEMP].key_data.mouse_x / 660 * 2.5; // 系数待测
+    gimbal_cmd_send.pitch += (float)video_data[TEMP].key_data.mouse_y / 660 * 2.5;
 
-    switch (video_data[TEMPV].key_count[V_KEY_PRESS][V_Key_Z] % 2) {
+    switch (video_data[TEMP].key_count[KEY_PRESS][Key_Z] % 2) {
         case 0:
             chassis_cmd_send.vision_lock_mode = ARMOR;
             gimbal_cmd_send.vision_lock_mode  = ARMOR;
@@ -560,7 +629,7 @@ static void MouseKeySet(void)
             chassis_cmd_send.vision_mode = UNLOCK;
             gimbal_cmd_send.vision_mode  = UNLOCK;
         }
-        if (video_data[TEMPV].key_data.right_button_down) // 右键开启自瞄
+        if (video_data[TEMP].key_data.right_button_down) // 右键开启自瞄
         {
             gimbal_cmd_send.yaw   = (vision_ctrl->yaw == 0 ? gimbal_cmd_send.yaw : vision_ctrl->yaw);
             gimbal_cmd_send.pitch = (vision_ctrl->pitch == 0 ? gimbal_cmd_send.pitch : vision_ctrl->pitch);
@@ -577,13 +646,13 @@ static void MouseKeySet(void)
         gimbal_cmd_send.pitch = PITCH_MIN_ANGLE;
 
     // V键刷新UI
-    if (video_data[TEMPV].key[V_KEY_PRESS].v) {
+    if (video_data[TEMP].key[KEY_PRESS].v) {
         chassis_cmd_send.ui_mode = UI_REFRESH;
     } else {
         chassis_cmd_send.ui_mode = UI_KEEP;
     }
 
-    switch (video_data[TEMPV].key_count[V_KEY_PRESS][V_Key_Q] % 2) // Q键开关摩擦轮
+    switch (video_data[TEMP].key_count[KEY_PRESS][Key_Q] % 2) // Q键开关摩擦轮
     {
         case 0:
             shoot_cmd_send.friction_mode = FRICTION_OFF;
@@ -593,7 +662,7 @@ static void MouseKeySet(void)
             break;
     }
 
-    switch (video_data[TEMPV].key_count[V_KEY_PRESS][V_Key_B] % 4) // B键切换发弹模式
+    switch (video_data[TEMP].key_count[KEY_PRESS][Key_B] % 4) // B键切换发弹模式
     {
         case 0:
             shoot_cmd_send.load_mode     = LOAD_SLOW;
@@ -616,10 +685,22 @@ static void MouseKeySet(void)
             break;
     }
 
-    if (!video_data[TEMPV].key_data.left_button_down ||
+    if (!video_data[TEMP].key_data.left_button_down ||
         shoot_cmd_send.friction_mode == FRICTION_OFF ||
         shoot_cmd_send.rest_heat <= 0) {
         shoot_cmd_send.load_mode = LOAD_STOP;
+    }
+
+    switch (video_data[TEMP].key_count[KEY_PRESS][Key_E] % 2) {
+        case 0:
+            shoot_cmd_send.lid_mode = LID_CLOSE;
+            break;
+        case 1:
+            shoot_cmd_send.lid_mode = LID_OPEN;
+            if (vision_ctrl->is_shooting == 0) {
+                shoot_cmd_send.load_mode = LOAD_STOP;
+            }
+            break;
     }
 
     // 这行代码在演
@@ -628,21 +709,21 @@ static void MouseKeySet(void)
     //     shoot_cmd_send.load_mode = LOAD_STOP;
     // }
 
-    if (video_data[TEMPV].key[V_KEY_PRESS].f) // F键开启拨盘反转模式
+    if (video_data[TEMP].key[KEY_PRESS].f) // F键开启拨盘反转模式
     {
         shoot_cmd_send.load_mode     = LOAD_REVERSE;
         chassis_cmd_send.loader_mode = LOAD_REVERSE;
     }
 
-    switch (video_data[TEMPV].key_count[V_KEY_PRESS][V_Key_E] % 2) // E键开关弹舱
-    {
-        case 0:
-            shoot_cmd_send.lid_mode = LID_CLOSE;
-            break;
-        default:
-            shoot_cmd_send.lid_mode = LID_OPEN;
-            break;
-    }
+    // switch (video_data[TEMP].key_count[KEY_PRESS][V_Key_E] % 2) // E键开关弹舱
+    // {
+    //     case 0:
+    //         shoot_cmd_send.lid_mode = LID_CLOSE;
+    //         break;
+    //     default:
+    //         shoot_cmd_send.lid_mode = LID_OPEN;
+    //         break;
+    // }
 #endif
 }
 

@@ -16,36 +16,36 @@ static Daemon_Instance *video_daemon_instance;
 
 static void VideoDataContorl()
 {
-    if (video_ctrl[TEMPV].key[V_KEY_PRESS].ctrl) // ctrl键按下
-        video_ctrl[TEMPV].key[V_KEY_PRESS_WITH_CTRL] = video_ctrl[TEMPV].key[V_KEY_PRESS];
+    if (video_ctrl[TEMP].key[KEY_PRESS].ctrl) // ctrl键按下
+        video_ctrl[TEMP].key[KEY_PRESS_WITH_CTRL] = video_ctrl[TEMP].key[KEY_PRESS];
     else
-        memset(&video_ctrl[TEMPV].key[V_KEY_PRESS_WITH_CTRL], 0, sizeof(V_Key_t));
-    if (video_ctrl[TEMPV].key[V_KEY_PRESS].shift) // shift键按下
-        video_ctrl[TEMPV].key[V_KEY_PRESS_WITH_SHIFT] = video_ctrl[TEMPV].key[V_KEY_PRESS];
+        memset(&video_ctrl[TEMP].key[KEY_PRESS_WITH_CTRL], 0, sizeof(Key_t));
+    if (video_ctrl[TEMP].key[KEY_PRESS].shift) // shift键按下
+        video_ctrl[TEMP].key[KEY_PRESS_WITH_SHIFT] = video_ctrl[TEMP].key[KEY_PRESS];
     else
-        memset(&video_ctrl[TEMPV].key[V_KEY_PRESS_WITH_SHIFT], 0, sizeof(V_Key_t));
+        memset(&video_ctrl[TEMP].key[KEY_PRESS_WITH_SHIFT], 0, sizeof(Key_t));
 
-    uint16_t key_now        = video_ctrl[TEMPV].key[V_KEY_PRESS].keys,            // 当前按键是否按下
-        key_last            = video_ctrl[LASTV].key[V_KEY_PRESS].keys,            // 上一次按键是否按下
-        key_with_ctrl       = video_ctrl[TEMPV].key[V_KEY_PRESS_WITH_CTRL].keys,  // 当前ctrl组合键是否按下
-        key_with_shift      = video_ctrl[TEMPV].key[V_KEY_PRESS_WITH_SHIFT].keys, //  当前shift组合键是否按下
-        key_last_with_ctrl  = video_ctrl[LASTV].key[V_KEY_PRESS_WITH_CTRL].keys,  // 上一次ctrl组合键是否按下
-        key_last_with_shift = video_ctrl[LASTV].key[V_KEY_PRESS_WITH_SHIFT].keys; // 上一次shift组合键是否按下
+    uint16_t key_now        = video_ctrl[TEMP].key[KEY_PRESS].keys,            // 当前按键是否按下
+        key_last            = video_ctrl[LAST].key[KEY_PRESS].keys,            // 上一次按键是否按下
+        key_with_ctrl       = video_ctrl[TEMP].key[KEY_PRESS_WITH_CTRL].keys,  // 当前ctrl组合键是否按下
+        key_with_shift      = video_ctrl[TEMP].key[KEY_PRESS_WITH_SHIFT].keys, //  当前shift组合键是否按下
+        key_last_with_ctrl  = video_ctrl[LAST].key[KEY_PRESS_WITH_CTRL].keys,  // 上一次ctrl组合键是否按下
+        key_last_with_shift = video_ctrl[LAST].key[KEY_PRESS_WITH_SHIFT].keys; // 上一次shift组合键是否按下
 
     for (uint16_t i = 0, j = 0x1; i < 16; j <<= 1, i++) {
         if (i == 4 || i == 5) // 4,5位为ctrl和shift,直接跳过
             continue;
         // 如果当前按键按下,上一次按键没有按下,且ctrl和shift组合键没有按下,则按键按下计数加1(检测到上升沿)
         if ((key_now & j) && !(key_last & j) && !(key_with_ctrl & j) && !(key_with_shift & j))
-            video_ctrl[TEMPV].key_count[V_KEY_PRESS][i]++;
+            video_ctrl[TEMP].key_count[KEY_PRESS][i]++;
         // 当前ctrl组合键按下,上一次ctrl组合键没有按下,则ctrl组合键按下计数加1(检测到上升沿)
         if ((key_with_ctrl & j) && !(key_last_with_ctrl & j))
-            video_ctrl[TEMPV].key_count[V_KEY_PRESS_WITH_CTRL][i]++;
+            video_ctrl[TEMP].key_count[KEY_PRESS_WITH_CTRL][i]++;
         // 当前shift组合键按下,上一次shift组合键没有按下,则shift组合键按下计数加1(检测到上升沿)
         if ((key_with_shift & j) && !(key_last_with_shift & j))
-            video_ctrl[TEMPV].key_count[V_KEY_PRESS_WITH_SHIFT][i]++;
+            video_ctrl[TEMP].key_count[KEY_PRESS_WITH_SHIFT][i]++;
     }
-    video_ctrl[LASTV] = video_ctrl[TEMPV];
+    video_ctrl[LAST] = video_ctrl[TEMP];
 }
 
 /**
@@ -59,7 +59,7 @@ static void VideoRead(uint8_t *buff)
     if (buff == NULL)      // 空数据包，则不作任何处理
         return;
     // 写入帧头数据(5-byte),用于判断是否开始存储裁判数据
-    memcpy(&video_ctrl[TEMPV].FrameHeader, buff, LEN_HEADER);
+    memcpy(&video_ctrl[TEMP].FrameHeader, buff, LEN_HEADER);
     // 判断帧头数据(0)是否为0xA5
     if (buff[SOF] == REFEREE_SOF) {
         // 帧头CRC8校验
@@ -69,24 +69,24 @@ static void VideoRead(uint8_t *buff)
             // 帧尾CRC16校验
             if (Verify_CRC16_Check_Sum(buff, judge_length) == TRUE) {
                 // 2个8位拼成16位int
-                video_ctrl[TEMPV].CmdID = (buff[6] << 8 | buff[5]);
+                video_ctrl[TEMP].CmdID = (buff[6] << 8 | buff[5]);
                 // 解析数据命令码,将数据拷贝到相应结构体中(注意拷贝数据的长度)
                 // 第8个字节开始才是数据 data=7
-                switch (video_ctrl[TEMPV].CmdID) {
+                switch (video_ctrl[TEMP].CmdID) {
                     case ID_custom_robot_data: // 自定义数据
-                        video_ctrl[TEMPV].custom_control_mode = buff[DATA_Offset];
+                        video_ctrl[TEMP].custom_control_mode = buff[DATA_Offset];
                         if (buff[DATA_Offset] == 0x2A) // 0x2A为自定义微调数据
                         {
-                            memcpy(&video_ctrl[TEMPV].custom_data, (buff + DATA_Offset + 1), LEN_custom_robot_data);
-                            memcpy(&video_ctrl[TEMPV].scd, &video_ctrl[TEMPV].custom_data, 24);
+                            memcpy(&video_ctrl[TEMP].custom_data, (buff + DATA_Offset + 1), LEN_custom_robot_data);
+                            memcpy(&video_ctrl[TEMP].scd, &video_ctrl[TEMP].custom_data, 24);
                         } else if (buff[DATA_Offset] == 0X0A) {
-                            memcpy(&video_ctrl[TEMPV].custom_data, (buff + DATA_Offset + 1), LEN_custom_robot_data);
-                            memcpy(&video_ctrl[TEMPV].cus, &video_ctrl[TEMPV].custom_data, 24);
+                            memcpy(&video_ctrl[TEMP].custom_data, (buff + DATA_Offset + 1), LEN_custom_robot_data);
+                            memcpy(&video_ctrl[TEMP].cus, &video_ctrl[TEMP].custom_data, 24);
                         }
                         break;
                     case ID_remote_control_data: // 图传链路键鼠数据
-                        memcpy(&video_ctrl[TEMPV].key_data, (buff + DATA_Offset), LEN_remote_control_data);
-                        *(uint16_t *)&video_ctrl[TEMPV].key[V_KEY_PRESS] = video_ctrl[TEMPV].key_data.keyboard_value;
+                        memcpy(&video_ctrl[TEMP].key_data, (buff + DATA_Offset), LEN_remote_control_data);
+                        *(uint16_t *)&video_ctrl[TEMP].key[KEY_PRESS] = video_ctrl[TEMP].key_data.keyboard_value;
                         VideoDataContorl();
                         break;
                     default:
@@ -109,7 +109,7 @@ static void VideoTransmitterCallback()
 
 static void VideoTransmitterLostCallback()
 {
-    // memset(video_ctrl->key,0,sizeof(V_Key_t)*3);
+    // memset(video_ctrl->key,0,sizeof(Key_t)*3);
     // memset(video_ctrl->key_count,0,sizeof(uint16_t)*3*16);
     // memset(&video_ctrl->key_data, 0, sizeof(remote_control_t));
 

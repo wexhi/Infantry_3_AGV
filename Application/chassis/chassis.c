@@ -99,7 +99,7 @@ void ChassisInit()
         .can_init_config.can_handle   = &hcan2,
         .controller_param_init_config = {
             .angle_PID = {
-                .Kp                = 9,
+                .Kp                = 8,
                 .Ki                = 1,
                 .Kd                = 0,
                 .CoefA             = 0.3,
@@ -285,12 +285,14 @@ static void SteeringWheelCalculate()
 // {
 // }
 
+static int super_cap_timer;
 /**
  * @brief
  *
  */
 static void LimitChassisOutput()
 {
+    super_cap_timer++;
     // 功率限制待添加
     uint16_t chassis_power_buffer = 0; // 底盘功率缓冲区
     float P_limit                 = 1; // 功率限制系数
@@ -332,7 +334,9 @@ static void LimitChassisOutput()
     }
 
     ui_data.Chassis_Power_Data.chassis_power_mx = super_cap->cap_data.voltage;
-    SuperCapSend(); // 发送超级电容数据
+    if (super_cap_timer % 15 == 0) {
+        SuperCapSend(); // 发送超级电容数据
+    }
 
     // 完成功率限制后进行电机参考输入设定
     DJIMotorSetRef(motor_lf, vt_lf * P_limit);

@@ -18,10 +18,7 @@
 #include "usart.h"
 
 #include "referee_protocol.h"
-
-// 用于遥控器数据读取,遥控器数据是一个大小为2的数组
-#define LASTV 1
-#define TEMPV 0
+#include "key_define.h"
 
 // 获取按键操作
 #define V_KEY_PRESS            0
@@ -30,48 +27,7 @@
 #define V_KEY_PRESS_WITH_SHIFT 2
 
 /* ----------------------- PC Key Definition-------------------------------- */
-// 对应key[x][0~16],获取对应的键;例如通过key[V_Key_PRESS][V_Key_W]获取W键是否按下,后续改为位域后删除
-#define V_Key_W     0
-#define V_Key_S     1
-#define V_Key_A     2
-#define V_Key_D     3
-#define V_Key_Shift 4
-#define V_Key_Ctrl  5
-#define V_Key_Q     6
-#define V_Key_E     7
-#define V_Key_R     8
-#define V_Key_F     9
-#define V_Key_G     10
-#define V_Key_Z     11
-#define V_Key_X     12
-#define V_Key_C     13
-#define V_Key_V     14
-#define V_Key_B     15
-
 #pragma pack(1)
-
-typedef union {
-    struct // 用于访问键盘状态
-    {
-        uint16_t w : 1;
-        uint16_t s : 1;
-        uint16_t a : 1;
-        uint16_t d : 1;
-        uint16_t shift : 1;
-        uint16_t ctrl : 1;
-        uint16_t q : 1;
-        uint16_t e : 1;
-        uint16_t r : 1;
-        uint16_t f : 1;
-        uint16_t g : 1;
-        uint16_t z : 1;
-        uint16_t x : 1;
-        uint16_t c : 1;
-        uint16_t v : 1;
-        uint16_t b : 1;
-    };
-    uint16_t keys; // 用于memcpy而不需要进行强制类型转换
-} V_Key_t;
 typedef struct
 {
     float maximal_arm_target; // 大臂的目标值
@@ -102,7 +58,7 @@ typedef struct
     slightly_controll_data scd;      // 轻微控制数据
     remote_control_t key_data;       // 遥控器数据
 
-    V_Key_t key[3]; // 改为位域后的键盘索引,空间减少8倍,速度增加16~倍
+    Key_t key[3]; // 改为位域后的键盘索引,空间减少8倍,速度增加16~倍
 
     uint8_t key_count[3][16];
 } Video_ctrl_t;
