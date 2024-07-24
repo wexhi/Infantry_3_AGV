@@ -24,25 +24,31 @@ typedef struct
 } SuperCapData_t;
 
 typedef struct {
-    uint16_t buffer; // 缓冲能量
-    uint16_t power;  // 底盘功率
-    uint8_t state;   // 状态
+    uint16_t buffer;         // 缓冲能量
+    uint16_t power;          // 底盘功率
+    uint8_t state;           // 状态
+    uint16_t motor1_current; // 电机1电流
+    uint16_t motor2_current; // 电机2电流
+    uint16_t motor3_current; // 电机3电流
+    uint16_t motor4_current; // 电机4电流
 } SupCapSend_t;
 #pragma pack()
 
 /* 超级电容实例 */
 typedef struct
 {
-    CAN_Instance *can_ins;   // CAN实例
-    SuperCapData_t cap_data; // 超级电容信息
-    SupCapSend_t send_data;  // 发送数据
-    Daemon_Instance *daemon; // 守护实例
+    CAN_Instance *can_ins;                  // CAN实例
+    CAN_Instance *can_ins_trans_motor_data; // CAN实例
+    SuperCapData_t cap_data;                // 超级电容信息
+    SupCapSend_t send_data;                 // 发送数据
+    Daemon_Instance *daemon;                // 守护实例
 } SuperCap_Instance;
 
 /* 超级电容初始化配置 */
 typedef struct
 {
     CAN_Init_Config_s can_config;
+    CAN_Init_Config_s can_motor_data_config;
 } SuperCap_Init_Config_s;
 
 /**
@@ -68,4 +74,20 @@ void SuperCapSet(uint16_t buffer, uint16_t power, uint8_t state);
  *
  */
 void SuperCapSend(void);
+
+/**
+ * @brief 设置电机电流
+ *
+ * @param motor1_current 电机1电流
+ * @param motor2_current 电机2电流
+ * @param motor3_current 电机3电流
+ * @param motor4_current 电机4电流
+ */
+void SuperCapSetMotor(uint16_t motor1_current, uint16_t motor2_current, uint16_t motor3_current, uint16_t motor4_current);
+
+/**
+ * @brief 发送电机电流数据
+ *
+ */
+void SuperCapMotorSend(void);
 #endif // !SUP_CAP_H

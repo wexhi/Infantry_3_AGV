@@ -157,10 +157,12 @@ void ShootTask()
             break;
         // 三连发,如果不需要后续可能删除
         case LOAD_3_BULLET:
-            DJIMotorOuterLoop(loader, ANGLE_LOOP);                                                                     // 切换到速度环
-            DJIMotorSetRef(loader, loader->measure.total_angle - 3 * ONE_BULLET_DELTA_ANGLE * REDUCTION_RATIO_LOADER); // 增加3发
-            hibernate_time = DWT_GetTimeline_ms();                                                                     // 记录触发指令的时间
-            dead_time      = 300;                                                                                      // 完成3发弹丸发射的时间
+            DJIMotorOuterLoop(loader, ANGLE_LOOP); // 切换到速度环
+            // DJIMotorSetRef(loader, loader->measure.total_angle - 3 * ONE_BULLET_DELTA_ANGLE * REDUCTION_RATIO_LOADER); // 增加3发
+            loader_set_angle = loader->measure.total_angle + 3 * ONE_BULLET_DELTA_ANGLE * REDUCTION_RATIO_LOADER; // 控制量增加3发弹丸的角度
+            DJIMotorSetRef(loader, loader_set_angle);
+            hibernate_time = DWT_GetTimeline_ms(); // 记录触发指令的时间
+            dead_time      = 300;                  // 完成3发弹丸发射的时间
             break;
         // 连发模式,对速度闭环,射频后续修改为可变,目前固定为1Hz
         case LOAD_FAST:

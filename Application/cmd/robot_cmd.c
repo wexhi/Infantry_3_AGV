@@ -256,7 +256,7 @@ static void RemoteControlSet(void)
 
     // 拨弹控制,遥控器固定为一种拨弹模式,可自行选择
     if (switch_is_up(rc_data[TEMP].rc.switch_left))
-        shoot_cmd_send.load_mode = LOAD_MEDIUM;
+        shoot_cmd_send.load_mode = LOAD_3_BULLET;
     else
         shoot_cmd_send.load_mode = LOAD_STOP;
 

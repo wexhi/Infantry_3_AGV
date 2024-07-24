@@ -41,6 +41,10 @@ SuperCap_Instance *SuperCapInit(SuperCap_Init_Config_s *config)
     config->can_config.id                  = super_cap_instance;
     super_cap_instance->can_ins            = CANRegister(&config->can_config);
 
+    config->can_motor_data_config.can_module_callback = NULL;
+    config->can_motor_data_config.id                  = NULL;
+    super_cap_instance->can_ins_trans_motor_data      = CANRegister(&config->can_motor_data_config);
+
     Daemon_Init_Config_s daemon_config = {
         .callback     = SuperCapLostCallback,
         .owner_id     = (void *)super_cap_instance,
@@ -67,4 +71,27 @@ void SuperCapSend(void)
     send_data[4]                = super_cap_instance->send_data.state;
     memcpy(super_cap_instance->can_ins->tx_buff, send_data, 8);
     CANTransmit(super_cap_instance->can_ins, 1);
+}
+
+void SuperCapSetMotor(uint16_t motor1_current, uint16_t motor2_current, uint16_t motor3_current, uint16_t motor4_current)
+{
+    super_cap_instance->send_data.motor1_current = motor1_current;
+    super_cap_instance->send_data.motor2_current = motor2_current;
+    super_cap_instance->send_data.motor3_current = motor3_current;
+    super_cap_instance->send_data.motor4_current = motor4_current;
+}
+
+void SuperCapMotorSend(void)
+{
+    static uint8_t send_data[8] = {0};
+    send_data[0]                = (super_cap_instance->send_data.motor1_current >> 8) & 0xff;
+    send_data[1]                = super_cap_instance->send_data.motor1_current & 0xff;
+    send_data[2]                = (super_cap_instance->send_data.motor2_current >> 8) & 0xff;
+    send_data[3]                = super_cap_instance->send_data.motor2_current & 0xff;
+    send_data[4]                = (super_cap_instance->send_data.motor3_current >> 8) & 0xff;
+    send_data[5]                = super_cap_instance->send_data.motor3_current & 0xff;
+    send_data[6]                = (super_cap_instance->send_data.motor4_current >> 8) & 0xff;
+    send_data[7]                = super_cap_instance->send_data.motor4_current & 0xff;
+    memcpy(super_cap_instance->can_ins_trans_motor_data->tx_buff, send_data, 8);
+    CANTransmit(super_cap_instance->can_ins_trans_motor_data, 0.2);
 }

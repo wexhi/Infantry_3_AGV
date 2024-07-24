@@ -159,6 +159,11 @@ void ChassisInit()
             .tx_id      = 0x302,
             .rx_id      = 0x301,
         },
+        .can_motor_data_config = {
+            .can_handle = &hcan1,
+            .tx_id      = 0x200,
+            .rx_id      = 0x304,
+        },
     };
     super_cap = SuperCapInit(&super_cap_config); // 超级电容初始化
 
@@ -332,10 +337,12 @@ static void LimitChassisOutput()
         P_limit = 1;
         SuperCapSet(referee_data->PowerHeatData.buffer_energy, referee_data->GameRobotState.chassis_power_limit, 3); // 设置超级电容数据
     }
+    SuperCapSetMotor(motor_lf->measure.real_current, motor_rf->measure.real_current, motor_lb->measure.real_current, motor_rb->measure.real_current);
 
     ui_data.Chassis_Power_Data.chassis_power_mx = super_cap->cap_data.voltage;
     if (super_cap_timer % 15 == 0) {
         SuperCapSend(); // 发送超级电容数据
+        SuperCapMotorSend();
     }
 
     // 完成功率限制后进行电机参考输入设定
