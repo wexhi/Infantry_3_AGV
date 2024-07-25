@@ -56,7 +56,8 @@ typedef struct
     uint32_t chassis_flag : 1;
     uint32_t gimbal_flag : 1;
     uint32_t shoot_flag : 1;
-    uint32_t lid_flag : 1;
+    // uint32_t lid_flag : 1;
+    uint32_t vision_is_shoot_flag : 1;
     uint32_t friction_flag : 1;
     uint32_t loader_flag : 1;
     uint32_t Power_flag : 1;
@@ -75,11 +76,12 @@ typedef struct
 {
     Referee_Interactive_Flag_t Referee_Interactive_Flag;
     // 为UI绘制以及交互数据所用
-    chassis_mode_e chassis_mode;             // 底盘模式
-    gimbal_mode_e gimbal_mode;               // 云台模式
-    shoot_mode_e shoot_mode;                 // 发射模式设置
-    friction_mode_e friction_mode;           // 摩擦轮关闭
-    lid_mode_e lid_mode;                     // 弹舱盖打开
+    chassis_mode_e chassis_mode;   // 底盘模式
+    gimbal_mode_e gimbal_mode;     // 云台模式
+    shoot_mode_e shoot_mode;       // 发射模式设置
+    friction_mode_e friction_mode; // 摩擦轮关闭
+    // lid_mode_e lid_mode;                     // 弹舱盖打开
+    vision_is_shoot_e vision_is_shoot;       // 视觉is_shoot
     loader_mode_e loader_mode;               // 射频选择
     Chassis_Power_Data_s Chassis_Power_Data; // 功率控制
     vision_mode_e vision_mode;               // 视觉模式
@@ -92,7 +94,8 @@ typedef struct
     gimbal_mode_e gimbal_last_mode;
     shoot_mode_e shoot_last_mode;
     friction_mode_e friction_last_mode;
-    lid_mode_e lid_last_mode;
+    // lid_mode_e lid_last_mode;
+    vision_is_shoot_e vision_last_is_shoot;
     loader_mode_e loader_mode_last;
     Chassis_Power_Data_s Chassis_last_Power_Data;
     vision_mode_e vision_last_mode;

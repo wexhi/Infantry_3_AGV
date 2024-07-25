@@ -1,7 +1,6 @@
 #include "shoot.h"
 #include "robot_def.h"
 
-#include "tim.h"
 #include "dji_motor.h"
 #include "message_center.h"
 #include "bsp_dwt.h"
@@ -107,9 +106,6 @@ void ShootInit()
     };
     loader = DJIMotorInit(&loader_config);
 
-    HAL_TIM_Base_Start(&htim1); // 开启定时器1
-    HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
-
     shoot_pub = PubRegister("shoot_feed", sizeof(Shoot_Upload_Data_s));
     shoot_sub = SubRegister("shoot_cmd", sizeof(Shoot_Ctrl_Cmd_s));
 }
@@ -161,8 +157,8 @@ void ShootTask()
             // DJIMotorSetRef(loader, loader->measure.total_angle - 3 * ONE_BULLET_DELTA_ANGLE * REDUCTION_RATIO_LOADER); // 增加3发
             loader_set_angle = loader->measure.total_angle + 3 * ONE_BULLET_DELTA_ANGLE * REDUCTION_RATIO_LOADER; // 控制量增加3发弹丸的角度
             DJIMotorSetRef(loader, loader_set_angle);
-            hibernate_time = DWT_GetTimeline_ms(); // 记录触发指令的时间
-            dead_time      = 300;                  // 完成3发弹丸发射的时间
+            hibernate_time = DWT_GetTimeline_ms();     // 记录触发指令的时间
+            dead_time      = shoot_cmd_recv.dead_time; // 完成3发弹丸发射的时间
             break;
         // 连发模式,对速度闭环,射频后续修改为可变,目前固定为1Hz
         case LOAD_FAST:
@@ -200,13 +196,6 @@ void ShootTask()
     {
         DJIMotorSetRef(friction_l, 0);
         DJIMotorSetRef(friction_r, 0);
-    }
-
-    // 开关弹舱盖
-    if (shoot_cmd_recv.lid_mode == LID_CLOSE) {
-        __HAL_TIM_SetCompare(&htim1, TIM_CHANNEL_1, 500);
-    } else if (shoot_cmd_recv.lid_mode == LID_OPEN) {
-        __HAL_TIM_SetCompare(&htim1, TIM_CHANNEL_1, 2500); // 2500关，500开
     }
 
     // 反馈数据,目前暂时没有要设定的反馈数据,后续可能增加应用离线监测以及卡弹反馈

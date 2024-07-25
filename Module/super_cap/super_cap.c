@@ -73,7 +73,7 @@ void SuperCapSend(void)
     CANTransmit(super_cap_instance->can_ins, 1);
 }
 
-void SuperCapSetMotor(uint16_t motor1_current, uint16_t motor2_current, uint16_t motor3_current, uint16_t motor4_current)
+void SuperCapSetMotor(int16_t motor1_current, int16_t motor2_current, int16_t motor3_current, int16_t motor4_current)
 {
     super_cap_instance->send_data.motor1_current = motor1_current;
     super_cap_instance->send_data.motor2_current = motor2_current;

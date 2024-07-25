@@ -224,10 +224,10 @@ static void SteeringWheelCalculate()
     at_rf_last = motor_steering_rf->measure.total_angle;
     at_rb_last = motor_steering_rb->measure.total_angle;
     if (chassis_vx == 0 && chassis_vy == 0 && chassis_cmd_recv.wz == 0) {
-        at_lf = at_lf_last;
-        at_rf = at_rf_last;
-        at_lb = at_lb_last;
-        at_rb = at_rb_last;
+        // at_lf = at_lf_last;
+        // at_rf = at_rf_last;
+        // at_lb = at_lb_last;
+        // at_rb = at_rb_last;
         vt_lb = 0, vt_lf = 0, vt_rf = 0, vt_rb = 0;
     } else {
         // 生成预计算变量，减少计算量，空间换时间
@@ -300,9 +300,11 @@ static void LimitChassisOutput()
     super_cap_timer++;
     // 功率限制待添加
     uint16_t chassis_power_buffer = 0; // 底盘功率缓冲区
+    uint16_t chassis_power        = 0;
     float P_limit                 = 1; // 功率限制系数
 
     chassis_power_buffer = referee_data->PowerHeatData.buffer_energy;
+    chassis_power        = referee_data->PowerHeatData.chassis_power;
     switch (chassis_cmd_recv.super_cap_mode) {
         case SUPER_CAP_OFF:
             SuperCapSet(referee_data->PowerHeatData.buffer_energy, referee_data->GameRobotState.chassis_power_limit, 2); // 设置超级电容数据
@@ -331,16 +333,23 @@ static void LimitChassisOutput()
         SuperCapSet(referee_data->PowerHeatData.buffer_energy, referee_data->GameRobotState.chassis_power_limit, 3); // 设置超级电容数据
         P_limit = 1;
     }
+
+    // 舵轮专用
+    if (chassis_power_buffer >= 55) {
+        P_limit = 1;
+    } else {
+        P_limit = chassis_power_buffer / 55.f;
+    }
+
     // 当超级电容强制开启且血量大于50%时，强制开启超级电容
-    if (chassis_cmd_recv.super_cap_mode == SUPER_CAP_FORCE_ON &&
-        (referee_data->GameRobotState.current_HP / referee_data->GameRobotState.maximum_HP) > 0.5) {
+    if (chassis_cmd_recv.super_cap_mode == SUPER_CAP_FORCE_ON) {
         P_limit = 1;
         SuperCapSet(referee_data->PowerHeatData.buffer_energy, referee_data->GameRobotState.chassis_power_limit, 3); // 设置超级电容数据
     }
     SuperCapSetMotor(motor_lf->measure.real_current, motor_rf->measure.real_current, motor_lb->measure.real_current, motor_rb->measure.real_current);
 
     ui_data.Chassis_Power_Data.chassis_power_mx = super_cap->cap_data.voltage;
-    if (super_cap_timer % 15 == 0) {
+    if (super_cap_timer % 2 == 0) {
         SuperCapSend(); // 发送超级电容数据
         SuperCapMotorSend();
     }
@@ -378,7 +387,7 @@ void ChassisTask()
     chassis_cmd_recv = *(Chassis_Ctrl_Cmd_s *)CANCommGet(chasiss_can_comm);
 #endif // CHASSIS_BOARD                                                    // CHASSIS_BOARD
     /* test code start in here */
-    // chassis_cmd_recv.chassis_mode = CHASSIS_SLOW;
+    // chassis_cmd_recv.chassis_mode = CHASSIS_ZERO_FORCE;
     // chassis_cmd_recv.vx           = test_vx,
     // chassis_cmd_recv.vy           = test_vy;
     // chassis_cmd_recv.wz           = test_wz;
@@ -447,9 +456,10 @@ void ChassisTask()
     ui_data.vision_mode      = chassis_cmd_recv.vision_mode;
     ui_data.vision_lock_mode = chassis_cmd_recv.vision_lock_mode;
     ui_data.level            = referee_data->GameRobotState.robot_level;
-    ui_data.lid_mode         = chassis_cmd_recv.lid_mode;
-    ui_data.super_cap_mode   = chassis_cmd_recv.super_cap_mode;
-    ui_data.loader_mode      = chassis_cmd_recv.loader_mode;
+    // ui_data.lid_mode         = chassis_cmd_recv.lid_mode;
+    ui_data.vision_is_shoot = chassis_cmd_recv.vision_is_shoot;
+    ui_data.super_cap_mode  = chassis_cmd_recv.super_cap_mode;
+    ui_data.loader_mode     = chassis_cmd_recv.loader_mode;
     // 推送反馈消息
 #ifdef ONE_BOARD
     PubPushMessage(chassis_pub, (void *)&chassis_feedback_data);

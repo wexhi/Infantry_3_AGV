@@ -83,7 +83,7 @@ void SuperCapSend(void);
  * @param motor3_current 电机3电流
  * @param motor4_current 电机4电流
  */
-void SuperCapSetMotor(uint16_t motor1_current, uint16_t motor2_current, uint16_t motor3_current, uint16_t motor4_current);
+void SuperCapSetMotor(int16_t motor1_current, int16_t motor2_current, int16_t motor3_current, int16_t motor4_current);
 
 /**
  * @brief 发送电机电流数据

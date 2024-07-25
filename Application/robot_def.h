@@ -46,7 +46,7 @@
 #define CHASSIS_STEERING_WHEEL               // 是否为舵轮
 #define STEERING_CHASSIS_ALIGN_ECD_LF   7600 // 舵电机 A 编码器值，若有机械改动需要修改
 #define STEERING_CHASSIS_ALIGN_ECD_LB   4112 // 舵电机 B 编码器值，若有机械改动需要修改
-#define STEERING_CHASSIS_ALIGN_ECD_RF   1423 // 舵电机 C 编码器值，若有机械改动需要修改
+#define STEERING_CHASSIS_ALIGN_ECD_RF   3981 // 舵电机 C 编码器值，若有机械改动需要修改
 #define STEERING_CHASSIS_ALIGN_ECD_RB   760  // 舵电机 D 编码器值，若有机械改动需要修改
 
 #define STEERING_CHASSIS_ALIGN_ANGLE_LF STEERING_CHASSIS_ALIGN_ECD_LF / 8192.f * 360.f // 舵轮 A 对齐角度
@@ -162,6 +162,11 @@ typedef enum {
     RUNNE,     // 瞄准打符
 } vision_lock_mode_e;
 
+typedef enum {
+    IS_SHOOTING_ON,  // 使用视觉is_shooting参数
+    IS_SHOOTING_OFF, // 不使用视觉is_shooting参数
+} vision_is_shoot_e;
+
 // 功率限制,从裁判系统获取,是否有必要保留?
 typedef struct
 { // 功率控制
@@ -240,7 +245,8 @@ typedef struct
     loader_mode_e loader_mode;           //  射频状态
     vision_mode_e vision_mode;           //  视觉状态
     vision_lock_mode_e vision_lock_mode; // 视觉锁定的目标状态
-    lid_mode_e lid_mode;                 //  弹舱盖状态
+    // lid_mode_e lid_mode;                 //  弹舱盖状态
+    vision_is_shoot_e vision_is_shoot; // 视觉是否开火
     //  ...
 
 } Chassis_Ctrl_Cmd_s;

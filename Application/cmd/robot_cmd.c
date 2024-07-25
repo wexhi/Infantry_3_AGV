@@ -30,8 +30,8 @@
 #define PTICH_HORIZON_ANGLE (PITCH_HORIZON_ECD * ECD_ANGLE_COEF_DJI)     // pitch水平时电机的角度,0-360
 #define CHASSIS_VX_MAX      25000.f                                      // 底盘最大速度
 #define CHASSIS_VY_MAX      25000.f                                      // 底盘最大速度
-#define CHASSIS_WZ_MAX      600.f                                        // 底盘最大速度
-#define SPEED_UP_RATE       100.f                                        // 底盘加速度
+#define CHASSIS_WZ_MAX      300.f                                        // 底盘最大速度
+#define SPEED_UP_RATE       50.f                                        // 底盘加速度
 #define SPEED_DOWN_RATE     160.f                                        // 底盘减速度
 // 对双板的兼容,条件编译
 #ifdef GIMBAL_BOARD
@@ -110,7 +110,7 @@ void RobotCMDInit(void)
 #endif // ONE_BOARD
 
     shoot_cmd_send.attack_mode  = NORMAL;
-    shoot_cmd_send.dead_time    = 600;
+    shoot_cmd_send.dead_time    = 300;
     shoot_cmd_send.bullet_speed = SMALL_AMU_30;
     gimbal_cmd_send.pitch       = 0;
     gimbal_cmd_send.yaw         = 0;
@@ -142,10 +142,10 @@ void RobotCMDTask(void)
     {
         RemoteControlSet();
     } else if (switch_is_up(rc_data[TEMP].rc.switch_right)) {
-        EmergencyHandler();
-        // RemoteMouseKeySet();
+        // EmergencyHandler();
+        RemoteMouseKeySet();
     }
-    // EmergencyHandler();
+
     // 设置视觉发送数据,还需增加加速度和角速度数据
     static float yaw, pitch, roll, bullet_speed, yaw_speed;
     yaw          = gimbal_fetch_data.gimbal_imu_data.YawTotalAngle;
@@ -160,7 +160,6 @@ void RobotCMDTask(void)
     // 推送消息,双板通信,视觉通信等
     chassis_cmd_send.friction_mode = shoot_cmd_send.friction_mode;
     chassis_cmd_send.vision_mode   = vision_ctrl->is_tracking ? LOCK : UNLOCK;
-    chassis_cmd_send.lid_mode      = shoot_cmd_send.lid_mode;
 
     // 其他应用所需的控制数据在remotecontrolsetmode和mousekeysetmode中完成设置
 #ifdef ONE_BOARD
@@ -240,7 +239,7 @@ static void RemoteControlSet(void)
     // max 70.f,参数过大会达到电机的峰值速度，导致底盘漂移等问题，且毫无意义
     chassis_cmd_send.vx = 100.0f * (float)rc_data[TEMP].rc.rocker_l1; // 1水平方向
     chassis_cmd_send.vy = 100.0f * (float)rc_data[TEMP].rc.rocker_l_; // _竖直方向
-    chassis_cmd_send.wz = -5.0f * (float)rc_data[TEMP].rc.dial;
+    // chassis_cmd_send.wz = -5.0f * (float)rc_data[TEMP].rc.dial;
 
     // 发射参数
     if (switch_is_down(rc_data[TEMP].rc.switch_left)) // 左侧开关状态[上],弹舱打开
@@ -350,7 +349,7 @@ static void RemoteMouseKeySet(void)
         }
     }
     if (rc_data[TEMP].key[KEY_PRESS].shift) {
-        chassis_cmd_send.wz += 5;
+        chassis_cmd_send.wz += 1;
     } else {
         chassis_cmd_send.wz = 0;
     }
@@ -434,18 +433,19 @@ static void RemoteMouseKeySet(void)
             shoot_cmd_send.shoot_rate    = 4;
             break;
         case 1:
-            shoot_cmd_send.load_mode     = LOAD_MEDIUM;
-            chassis_cmd_send.loader_mode = LOAD_MEDIUM;
+            shoot_cmd_send.load_mode     = LOAD_FAST;
+            chassis_cmd_send.loader_mode = LOAD_FAST;
             shoot_cmd_send.shoot_rate    = 8;
             break;
         case 2:
-            shoot_cmd_send.load_mode     = LOAD_FAST;
-            chassis_cmd_send.loader_mode = LOAD_FAST;
-            shoot_cmd_send.shoot_rate    = 12;
-            break;
-        default:
             shoot_cmd_send.load_mode     = LOAD_1_BULLET;
             chassis_cmd_send.loader_mode = LOAD_1_BULLET;
+            shoot_cmd_send.dead_time     = 600;
+            break;
+        default:
+            shoot_cmd_send.load_mode     = LOAD_3_BULLET;
+            chassis_cmd_send.loader_mode = LOAD_3_BULLET;
+            shoot_cmd_send.dead_time     = 300;
             break;
     }
 
@@ -457,13 +457,13 @@ static void RemoteMouseKeySet(void)
 
     switch (rc_data[TEMP].key_count[KEY_PRESS][Key_E] % 2) {
         case 0:
-            shoot_cmd_send.lid_mode = LID_CLOSE;
-            break;
-        case 1:
-            shoot_cmd_send.lid_mode = LID_OPEN;
+            chassis_cmd_send.vision_is_shoot = IS_SHOOTING_ON;
             if (vision_ctrl->is_shooting == 0) {
                 shoot_cmd_send.load_mode = LOAD_STOP;
             }
+            break;
+        case 1:
+            chassis_cmd_send.vision_is_shoot = IS_SHOOTING_OFF;
             break;
     }
 
@@ -586,7 +586,7 @@ static void MouseKeySet(void)
         }
     }
     if (video_data[TEMP].key[KEY_PRESS].shift) {
-        chassis_cmd_send.wz += 5;
+        chassis_cmd_send.wz += 1;
     } else {
         chassis_cmd_send.wz = 0;
     }
@@ -670,18 +670,19 @@ static void MouseKeySet(void)
             shoot_cmd_send.shoot_rate    = 4;
             break;
         case 1:
-            shoot_cmd_send.load_mode     = LOAD_MEDIUM;
-            chassis_cmd_send.loader_mode = LOAD_MEDIUM;
+            shoot_cmd_send.load_mode     = LOAD_FAST;
+            chassis_cmd_send.loader_mode = LOAD_FAST;
             shoot_cmd_send.shoot_rate    = 8;
             break;
         case 2:
-            shoot_cmd_send.load_mode     = LOAD_FAST;
-            chassis_cmd_send.loader_mode = LOAD_FAST;
-            shoot_cmd_send.shoot_rate    = 12;
-            break;
-        default:
             shoot_cmd_send.load_mode     = LOAD_1_BULLET;
             chassis_cmd_send.loader_mode = LOAD_1_BULLET;
+            shoot_cmd_send.dead_time     = 600;
+            break;
+        default:
+            shoot_cmd_send.load_mode     = LOAD_3_BULLET;
+            chassis_cmd_send.loader_mode = LOAD_3_BULLET;
+            shoot_cmd_send.dead_time     = 300;
             break;
     }
 
@@ -693,13 +694,13 @@ static void MouseKeySet(void)
 
     switch (video_data[TEMP].key_count[KEY_PRESS][Key_E] % 2) {
         case 0:
-            shoot_cmd_send.lid_mode = LID_CLOSE;
-            break;
-        case 1:
-            shoot_cmd_send.lid_mode = LID_OPEN;
+            chassis_cmd_send.vision_is_shoot = IS_SHOOTING_ON;
             if (vision_ctrl->is_shooting == 0) {
                 shoot_cmd_send.load_mode = LOAD_STOP;
             }
+            break;
+        case 1:
+            chassis_cmd_send.vision_is_shoot = IS_SHOOTING_OFF;
             break;
     }
 
