@@ -300,11 +300,11 @@ static void LimitChassisOutput()
     super_cap_timer++;
     // 功率限制待添加
     uint16_t chassis_power_buffer = 0; // 底盘功率缓冲区
-    uint16_t chassis_power        = 0;
-    float P_limit                 = 1; // 功率限制系数
+    // uint16_t chassis_power        = 0;
+    float P_limit = 1; // 功率限制系数
 
     chassis_power_buffer = referee_data->PowerHeatData.buffer_energy;
-    chassis_power        = referee_data->PowerHeatData.chassis_power;
+    // chassis_power        = referee_data->PowerHeatData.chassis_power;
     switch (chassis_cmd_recv.super_cap_mode) {
         case SUPER_CAP_OFF:
             SuperCapSet(referee_data->PowerHeatData.buffer_energy, referee_data->GameRobotState.chassis_power_limit, 2); // 设置超级电容数据
@@ -317,35 +317,36 @@ static void LimitChassisOutput()
     }
 
     // 当前没接上超电此处先行注释
-
-    if (chassis_cmd_recv.super_cap_mode == SUPER_CAP_OFF || super_cap->cap_data.voltage <= 12.f) {
-        // 当电容电量过低时强制关闭超电
-        chassis_cmd_recv.super_cap_mode = SUPER_CAP_OFF;
-        SuperCapSet(referee_data->PowerHeatData.buffer_energy, referee_data->GameRobotState.chassis_power_limit, 2); // 设置超级电容数据
-        /*缓冲能量占比环，总体约束*/
-        if (chassis_power_buffer >= 50) {
-            P_limit = 1;
-        } else {
-            P_limit = chassis_power_buffer / 50.f;
-        }
-    } else {
-        chassis_cmd_recv.super_cap_mode = SUPER_CAP_ON;
-        SuperCapSet(referee_data->PowerHeatData.buffer_energy, referee_data->GameRobotState.chassis_power_limit, 3); // 设置超级电容数据
-        P_limit = 1;
-    }
-
-    // 舵轮专用
-    if (chassis_power_buffer >= 55) {
-        P_limit = 1;
-    } else {
-        P_limit = chassis_power_buffer / 55.f;
-    }
-
     // 当超级电容强制开启且血量大于50%时，强制开启超级电容
     if (chassis_cmd_recv.super_cap_mode == SUPER_CAP_FORCE_ON) {
         P_limit = 1;
         SuperCapSet(referee_data->PowerHeatData.buffer_energy, referee_data->GameRobotState.chassis_power_limit, 3); // 设置超级电容数据
+    } else {
+        if (chassis_cmd_recv.super_cap_mode == SUPER_CAP_OFF ||
+            super_cap->state == SUP_CAP_STATE_CHARGING) {
+            // 当电容电量过低时强制关闭超电,进行充电
+            chassis_cmd_recv.super_cap_mode = SUPER_CAP_OFF;
+            SuperCapSet(referee_data->PowerHeatData.buffer_energy, referee_data->GameRobotState.chassis_power_limit, 2); // 设置超级电容数据
+            /*缓冲能量占比环，总体约束*/
+            if (chassis_power_buffer >= 55) {
+                P_limit = 1;
+            } else {
+                P_limit = chassis_power_buffer / 55.f;
+            }
+        } else {
+            chassis_cmd_recv.super_cap_mode = SUPER_CAP_ON;
+            SuperCapSet(referee_data->PowerHeatData.buffer_energy, referee_data->GameRobotState.chassis_power_limit, 3); // 设置超级电容数据
+            P_limit = 1;
+        }
     }
+
+    // 舵轮专用
+    // if (chassis_power_buffer >= 55) {
+    //     P_limit = 1;
+    // } else {
+    //     P_limit = chassis_power_buffer / 55.f;
+    // }
+
     SuperCapSetMotor(motor_lf->measure.real_current, motor_rf->measure.real_current, motor_lb->measure.real_current, motor_rb->measure.real_current);
 
     ui_data.Chassis_Power_Data.chassis_power_mx = super_cap->cap_data.voltage;

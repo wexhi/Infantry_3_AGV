@@ -31,7 +31,7 @@
 #define CHASSIS_VX_MAX      25000.f                                      // 底盘最大速度
 #define CHASSIS_VY_MAX      25000.f                                      // 底盘最大速度
 #define CHASSIS_WZ_MAX      300.f                                        // 底盘最大速度
-#define SPEED_UP_RATE       50.f                                        // 底盘加速度
+#define SPEED_UP_RATE       50.f                                         // 底盘加速度
 #define SPEED_DOWN_RATE     160.f                                        // 底盘减速度
 // 对双板的兼容,条件编译
 #ifdef GIMBAL_BOARD
@@ -239,7 +239,7 @@ static void RemoteControlSet(void)
     // max 70.f,参数过大会达到电机的峰值速度，导致底盘漂移等问题，且毫无意义
     chassis_cmd_send.vx = 100.0f * (float)rc_data[TEMP].rc.rocker_l1; // 1水平方向
     chassis_cmd_send.vy = 100.0f * (float)rc_data[TEMP].rc.rocker_l_; // _竖直方向
-    // chassis_cmd_send.wz = -5.0f * (float)rc_data[TEMP].rc.dial;
+    chassis_cmd_send.wz = -5.0f * (float)rc_data[TEMP].rc.dial;
 
     // 发射参数
     if (switch_is_down(rc_data[TEMP].rc.switch_left)) // 左侧开关状态[上],弹舱打开
@@ -550,7 +550,11 @@ static void MouseKeySet(void)
     // chassis_cmd_send.wz = video_data[TEMP].key[KEY_PRESS].shift * 1000 * chassis_speed_buff;
 
     if (video_data[TEMP].key[KEY_PRESS].w) {
-        forward_speed += SPEED_UP_RATE;
+        if (chassis_cmd_send.chassis_mode == CHASSIS_FOLLOW_GIMBAL_YAW) {
+            forward_speed += 5 * SPEED_UP_RATE;
+        } else {
+            forward_speed += SPEED_UP_RATE;
+        }
     } else {
         if (forward_speed > CHASSIS_VX_MAX / 4) {
             forward_speed -= SPEED_DOWN_RATE * 4;

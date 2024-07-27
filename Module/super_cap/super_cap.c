@@ -23,6 +23,15 @@ static void SuperCapRxCallback(CAN_Instance *_instance)
     data->voltage          = (((uint16_t)rxbuff[0] << 8) | rxbuff[1]) / 1000;
     data->power            = (((uint16_t)rxbuff[2] << 8) | rxbuff[3]) / 1000;
     data->status           = rxbuff[4];
+    // 根据电压状态判断当前需要充电还是放电
+    if (data->voltage < 13 && ins->state == SUP_CAP_STATE_DISCHARGING)
+    {
+        ins->state = SUP_CAP_STATE_CHARGING;
+    }
+    else if (data->voltage > 15 && ins->state == SUP_CAP_STATE_CHARGING)
+    {
+        ins->state = SUP_CAP_STATE_DISCHARGING;
+    }
 }
 
 static void SuperCapLostCallback(void *cap_ptr)
@@ -40,6 +49,7 @@ SuperCap_Instance *SuperCapInit(SuperCap_Init_Config_s *config)
     config->can_config.can_module_callback = SuperCapRxCallback;
     config->can_config.id                  = super_cap_instance;
     super_cap_instance->can_ins            = CANRegister(&config->can_config);
+    super_cap_instance->state              = SUP_CAP_STATE_DISCHARGING;
 
     config->can_motor_data_config.can_module_callback = NULL;
     config->can_motor_data_config.id                  = NULL;

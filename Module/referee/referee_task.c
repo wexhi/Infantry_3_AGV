@@ -283,17 +283,17 @@ static void MyUIRefresh(referee_info_t *referee_recv_info, Referee_Interactive_i
                 UICharDraw(&UI_State_dyn[1], "sd1", UI_Graph_Change, 8, UI_Color_Main, 15, 2, 270, 750, "zeroforce");
                 break;
             case CHASSIS_FAST:
-                UICharDraw(&UI_State_dyn[1], "sd1", UI_Graph_Change, 8, UI_Color_Main, 15, 2, 270, 750, "fast     ");
+                UICharDraw(&UI_State_dyn[1], "sd1", UI_Graph_Change, 8, UI_Color_Purplish_red, 15, 2, 270, 750, "fast     ");
                 break;
             case CHASSIS_MEDIUM:
-                UICharDraw(&UI_State_dyn[1], "sd1", UI_Graph_Change, 8, UI_Color_Main, 15, 2, 270, 750, "medium   ");
+                UICharDraw(&UI_State_dyn[1], "sd1", UI_Graph_Change, 8, UI_Color_Pink, 15, 2, 270, 750, "medium   ");
                 // 此处注意字数对齐问题，字数相同才能覆盖掉
                 break;
             case CHASSIS_FOLLOW_GIMBAL_YAW:
-                UICharDraw(&UI_State_dyn[1], "sd1", UI_Graph_Change, 8, UI_Color_Main, 15, 2, 270, 750, "follow   ");
+                UICharDraw(&UI_State_dyn[1], "sd1", UI_Graph_Change, 8, UI_Color_Cyan, 15, 2, 270, 750, "follow   ");
                 break;
             case CHASSIS_SLOW:
-                UICharDraw(&UI_State_dyn[1], "sd1", UI_Graph_Change, 8, UI_Color_Main, 15, 2, 270, 750, "slow     ");
+                UICharDraw(&UI_State_dyn[1], "sd1", UI_Graph_Change, 8, UI_Color_Green, 15, 2, 270, 750, "slow     ");
                 break;
         }
         UICharRefresh(&referee_recv_info->referee_id, UI_State_dyn[1]);
@@ -307,7 +307,7 @@ static void MyUIRefresh(referee_info_t *referee_recv_info, Referee_Interactive_i
                 break;
             }
             case RUNNE: {
-                UICharDraw(&UI_State_dyn[2], "sd2", UI_Graph_Change, 8, UI_Color_Yellow, 15, 2, 270, 700, "runne");
+                UICharDraw(&UI_State_dyn[2], "sd2", UI_Graph_Change, 8, UI_Color_Main, 15, 2, 270, 700, "runne");
                 break;
             }
         }
@@ -316,7 +316,19 @@ static void MyUIRefresh(referee_info_t *referee_recv_info, Referee_Interactive_i
     }
     // super_cap
     if (_Interactive_data->Referee_Interactive_Flag.super_cap_flag == 1) {
-        UICharDraw(&UI_State_dyn[3], "sd3", UI_Graph_Change, 8, UI_Color_Orange, 15, 2, 270, 650, _Interactive_data->super_cap_mode == SUPER_CAP_ON ? "on " : "off");
+        switch (_Interactive_data->super_cap_mode) {
+            case SUPER_CAP_ON:
+                UICharDraw(&UI_State_dyn[3], "sd3", UI_Graph_Change, 8, UI_Color_Pink, 15, 2, 270, 650, "on   ");
+                break;
+            case SUPER_CAP_OFF:
+                UICharDraw(&UI_State_dyn[3], "sd3", UI_Graph_Change, 8, UI_Color_Green, 15, 2, 270, 650, "off  ");
+                break;
+            case SUPER_CAP_FORCE_ON:
+                UICharDraw(&UI_State_dyn[3], "sd3", UI_Graph_Change, 8, UI_Color_Purplish_red, 15, 2, 270, 650, "force");
+                break;
+            default:
+                break;
+        }
         UICharRefresh(&referee_recv_info->referee_id, UI_State_dyn[3]);
         _Interactive_data->Referee_Interactive_Flag.super_cap_flag = 0;
     }
@@ -339,22 +351,22 @@ static void MyUIRefresh(referee_info_t *referee_recv_info, Referee_Interactive_i
                 UICharDraw(&UI_State_dyn[6], "sd6", UI_Graph_Change, 8, UI_Color_Purplish_red, 15, 2, 270, 850, "reverse ");
                 break;
             case LOAD_SLOW:
-                UICharDraw(&UI_State_dyn[6], "sd6", UI_Graph_Change, 8, UI_Color_Purplish_red, 15, 2, 270, 850, "slow    ");
+                UICharDraw(&UI_State_dyn[6], "sd6", UI_Graph_Change, 8, UI_Color_Green, 15, 2, 270, 850, "slow    ");
                 break;
             case LOAD_MEDIUM:
-                UICharDraw(&UI_State_dyn[6], "sd6", UI_Graph_Change, 8, UI_Color_Purplish_red, 15, 2, 270, 850, "medium  ");
+                UICharDraw(&UI_State_dyn[6], "sd6", UI_Graph_Change, 8, UI_Color_Yellow, 15, 2, 270, 850, "medium  ");
                 break;
             case LOAD_FAST:
-                UICharDraw(&UI_State_dyn[6], "sd6", UI_Graph_Change, 8, UI_Color_Purplish_red, 15, 2, 270, 850, "fast    ");
+                UICharDraw(&UI_State_dyn[6], "sd6", UI_Graph_Change, 8, UI_Color_Orange, 15, 2, 270, 850, "fast    ");
                 break;
             case LOAD_STOP:
-                UICharDraw(&UI_State_dyn[6], "sd6", UI_Graph_Change, 8, UI_Color_Purplish_red, 15, 2, 270, 850, "stop    ");
+                UICharDraw(&UI_State_dyn[6], "sd6", UI_Graph_Change, 8, UI_Color_Black, 15, 2, 270, 850, "stop    ");
                 break;
             case LOAD_1_BULLET:
-                UICharDraw(&UI_State_dyn[6], "sd6", UI_Graph_Change, 8, UI_Color_Purplish_red, 15, 2, 270, 850, "1_bullet");
+                UICharDraw(&UI_State_dyn[6], "sd6", UI_Graph_Change, 8, UI_Color_Cyan, 15, 2, 270, 850, "1_bullet");
                 break;
             case LOAD_3_BULLET:
-                UICharDraw(&UI_State_dyn[6], "sd6", UI_Graph_Change, 8, UI_Color_Purplish_red, 15, 2, 270, 850, "3_bullet");
+                UICharDraw(&UI_State_dyn[6], "sd6", UI_Graph_Change, 8, UI_Color_Pink, 15, 2, 270, 850, "3_bullet");
                 break;
             default:
                 break;
@@ -365,7 +377,10 @@ static void MyUIRefresh(referee_info_t *referee_recv_info, Referee_Interactive_i
     // power
     if (_Interactive_data->Referee_Interactive_Flag.Power_flag == 1) {
         UIFloatDraw(&UI_Energy[1], "sd7", UI_Graph_Change, 8, UI_Color_Green, 18, 2, 2, 750, 230, _Interactive_data->Chassis_Power_Data.chassis_power_mx * 1000);
-        UILineDraw(&UI_Energy[2], "sd8", UI_Graph_Change, 8, UI_Color_Pink, 30, 720, 160, (uint32_t)720 + ((_Interactive_data->Chassis_Power_Data.chassis_power_mx - 12) * 50), 160);
+        if (_Interactive_data->Chassis_Power_Data.chassis_power_mx >= 12)
+            UILineDraw(&UI_Energy[2], "sd8", UI_Graph_Change, 8, UI_Color_Pink, 30, 720, 160, (uint32_t)720 + ((_Interactive_data->Chassis_Power_Data.chassis_power_mx - 12) * 50), 160);
+        else
+            UILineDraw(&UI_Energy[2], "sd8", UI_Graph_Change, 8, UI_Color_Black, 30, 720, 160, (uint32_t)720 + ((_Interactive_data->Chassis_Power_Data.chassis_power_mx - 12) * 50), 160);
         UIGraphRefresh(&referee_recv_info->referee_id, 2, UI_Energy[1], UI_Energy[2]);
         _Interactive_data->Referee_Interactive_Flag.Power_flag = 0;
     }
