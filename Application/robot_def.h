@@ -14,6 +14,7 @@
 
 #include "stdint.h"
 #include "ins_task.h"
+#include "miniPC_process.h"
 
 /* 开发板类型定义,烧录时注意不要弄错对应功能;修改定义后需要重新编译,只能存在一个定义! */
 // #define ONE_BOARD // ! 单板控制整车，beta选项，建议别选上
@@ -336,6 +337,7 @@ typedef struct
     uint16_t shoot_heat;  // 枪口热量
     uint16_t shoot_limit; // 枪口热量上限
     float bullet_speed;   // 裁判系统弹速
+    Self_Color_e self_color;
     // Gimbal_Ctrl_Cmd_s gimbal_ctrl_cmd;
     // Shoot_Ctrl_Cmd_s shoot_ctrl_cmd;
     // Bullet_Speed_e bullet_speed; // 弹速限制

@@ -154,6 +154,7 @@ void RobotCMDTask(void)
     bullet_speed = chassis_fetch_data.bullet_speed;
     yaw_speed    = gimbal_fetch_data.gimbal_imu_data.Gyro[2];
 
+    VisionSetDetectColor(chassis_fetch_data.self_color);
     VisionSetAltitude(yaw, pitch, roll, bullet_speed, yaw_speed);
 
     // 发送控制信息

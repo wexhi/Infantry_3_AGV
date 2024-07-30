@@ -56,6 +56,13 @@ typedef enum {
     VISION_DETECT_COLOR_BLUE = 1u,
 } VISION_DETECT_COLOR_e;
 
+typedef enum {
+    COLOR_NONE = 0,
+    COLOR_BLUE = 1,
+    COLOR_RED  = 2,
+
+} Self_Color_e;
+
 /* 视觉通信初始化接收结构体 */
 typedef struct
 {
@@ -96,7 +103,7 @@ typedef struct
 {
     uint8_t header;
     uint8_t is_energy_mode; // 0-瞄准装甲板，1-瞄准能量机关
-    uint8_t detect_color;   // 0-red 1-blue 发1
+    uint8_t detect_color;   // 5-red 6-blue 发1
     float roll;             // rad
     float yaw;              // rad
     float pitch;            //
@@ -158,5 +165,12 @@ void VisionSend();
 void VisionSetAltitude(float yaw, float pitch, float roll, float bullet_speed, float yaw_speed);
 
 void VisionSetEnergy(uint8_t is_energy_mode);
+
+/**
+ * @brief 设置颜色
+ *
+ * @param detect_color 5-红色，6-蓝色
+ */
+void VisionSetDetectColor(Self_Color_e self_color);
 
 #endif // MINIPC_PROCESS_H

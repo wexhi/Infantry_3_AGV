@@ -450,6 +450,8 @@ void ChassisTask()
     chassis_feedback_data.shoot_heat   = referee_data->PowerHeatData.shooter_17mm_1_barrel_heat;
     chassis_feedback_data.shoot_limit  = referee_data->GameRobotState.shooter_barrel_heat_limit;
     chassis_feedback_data.bullet_speed = referee_data->ShootData.bullet_speed;
+    // 我方颜色id小于10是红色,大于10是蓝色,注意这里发送的是自己的颜色, 1:blue , 2:red
+    chassis_feedback_data.self_color = referee_data->GameRobotState.robot_id > 10 ? COLOR_BLUE : COLOR_RED;
 
     ui_data.ui_mode          = chassis_cmd_recv.ui_mode;
     ui_data.chassis_mode     = chassis_cmd_recv.chassis_mode;

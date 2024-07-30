@@ -107,6 +107,23 @@ void VisionSetEnergy(uint8_t is_energy_mode)
 }
 
 /**
+ * @brief 设置颜色
+ *
+ * @param detect_color 5-红色，6-蓝色
+ */
+void VisionSetDetectColor(Self_Color_e self_color)
+{
+    uint8_t detect_color = 0;
+    if (self_color == COLOR_BLUE) {
+        detect_color = 5; // 我方是蓝色，敌方是红色
+    }
+    if (self_color == COLOR_RED) {
+        detect_color = 6; // 我方是红色，敌方是蓝色
+    }
+    vision_instance->send_data->detect_color = detect_color;
+}
+
+/**
  * @brief 发送数据处理函数
  *
  * @param send 待发送数据
