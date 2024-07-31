@@ -24,12 +24,9 @@ static void SuperCapRxCallback(CAN_Instance *_instance)
     data->power            = (((uint16_t)rxbuff[2] << 8) | rxbuff[3]) / 1000;
     data->status           = rxbuff[4];
     // 根据电压状态判断当前需要充电还是放电
-    if (data->voltage < 13 && ins->state == SUP_CAP_STATE_DISCHARGING)
-    {
+    if (data->voltage < 14 && ins->state == SUP_CAP_STATE_DISCHARGING) {
         ins->state = SUP_CAP_STATE_CHARGING;
-    }
-    else if (data->voltage > 15 && ins->state == SUP_CAP_STATE_CHARGING)
-    {
+    } else if (data->voltage > 17 && ins->state == SUP_CAP_STATE_CHARGING) {
         ins->state = SUP_CAP_STATE_DISCHARGING;
     }
 }

@@ -115,7 +115,7 @@ void ChassisInit()
                 .Kd            = 0,
                 .Improve       = PID_Integral_Limit | PID_Derivative_On_Measurement | PID_ChangingIntegrationRate | PID_OutputFilter,
                 .IntegralLimit = 4000,
-                .MaxOut        = 20000,
+                .MaxOut        = 8000,
                 .Output_LPF_RC = 0.03,
             },
         },
@@ -326,7 +326,7 @@ static void LimitChassisOutput()
             super_cap->state == SUP_CAP_STATE_CHARGING) {
             // 当电容电量过低时强制关闭超电,进行充电
             chassis_cmd_recv.super_cap_mode = SUPER_CAP_OFF;
-            SuperCapSet(referee_data->PowerHeatData.buffer_energy, referee_data->GameRobotState.chassis_power_limit, 2); // 设置超级电容数据
+            SuperCapSet(referee_data->PowerHeatData.buffer_energy, referee_data->GameRobotState.chassis_power_limit, 3); // 设置超级电容数据
             /*缓冲能量占比环，总体约束*/
             if (chassis_power_buffer >= 55) {
                 P_limit = 1;

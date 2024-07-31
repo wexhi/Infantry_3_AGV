@@ -29,9 +29,9 @@ void GimbalInit()
         },
         .controller_param_init_config = {
             .angle_PID = {
-                .Kp                = 10.7,
-                .Ki                = 1.15,
-                .Kd                = 0.0032,
+                .Kp                = 0.685,
+                .Ki                = 0.315,
+                .Kd                = 0.022,
                 .Improve           = PID_Trapezoid_Intergral | PID_Integral_Limit | PID_Derivative_On_Measurement | PID_DerivativeFilter | PID_ChangingIntegrationRate,
                 .IntegralLimit     = 1060,
                 .CoefB             = 0.2,
@@ -131,23 +131,23 @@ void GimbalTask()
     // TEST CODE END HERE
 
     // 当视觉锁定目标时,根据视觉锁定模式进行不同的处理
-    if (gimbal_cmd_recv.vision_mode == LOCK) {
-        switch (gimbal_cmd_recv.vision_lock_mode) {
-            case ARMOR:
-                break;
-            case RUNNE:
-                yaw_motor->motor_controller.angle_PID.Kp = 0.47; // 0.5
-                yaw_motor->motor_controller.angle_PID.Ki = 0.01; // 0.01
-                yaw_motor->motor_controller.angle_PID.Kd = 0.01; // 0.01
-                break;
-            default:
-                break;
-        }
-    } else {
-        yaw_motor->motor_controller.angle_PID.Kp = 0.685; // 0.685
-        yaw_motor->motor_controller.angle_PID.Ki = 0.315; // 0.315
-        yaw_motor->motor_controller.angle_PID.Kd = 0.022; // 0.022
-    }
+    // if (gimbal_cmd_recv.vision_mode == LOCK) {
+    //     switch (gimbal_cmd_recv.vision_lock_mode) {
+    //         case ARMOR:
+    //             break;
+    //         case RUNNE:
+    //             yaw_motor->motor_controller.angle_PID.Kp = 0.47; // 0.5
+    //             yaw_motor->motor_controller.angle_PID.Ki = 0.01; // 0.01
+    //             yaw_motor->motor_controller.angle_PID.Kd = 0.01; // 0.01
+    //             break;
+    //         default:
+    //             break;
+    //     }
+    // } else {
+    //     yaw_motor->motor_controller.angle_PID.Kp = 0.685; // 0.685
+    //     yaw_motor->motor_controller.angle_PID.Ki = 0.315; // 0.315
+    //     yaw_motor->motor_controller.angle_PID.Kd = 0.022; // 0.022
+    // }
 
     // @todo:现在已不再需要电机反馈,实际上可以始终使用IMU的姿态数据来作为云台的反馈,yaw电机的offset只是用来跟随底盘
     // 根据控制模式进行电机反馈切换和过渡,视觉模式在robot_cmd模块就已经设置好,gimbal只看yaw_ref和pitch_ref

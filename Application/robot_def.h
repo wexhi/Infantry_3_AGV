@@ -48,7 +48,7 @@
 #define STEERING_CHASSIS_ALIGN_ECD_LF   7600 // 舵电机 A 编码器值，若有机械改动需要修改
 #define STEERING_CHASSIS_ALIGN_ECD_LB   4112 // 舵电机 B 编码器值，若有机械改动需要修改
 #define STEERING_CHASSIS_ALIGN_ECD_RF   3981 // 舵电机 C 编码器值，若有机械改动需要修改
-#define STEERING_CHASSIS_ALIGN_ECD_RB   760  // 舵电机 D 编码器值，若有机械改动需要修改
+#define STEERING_CHASSIS_ALIGN_ECD_RB   3420  // 舵电机 D 编码器值，若有机械改动需要修改
 
 #define STEERING_CHASSIS_ALIGN_ANGLE_LF STEERING_CHASSIS_ALIGN_ECD_LF / 8192.f * 360.f // 舵轮 A 对齐角度
 #define STEERING_CHASSIS_ALIGN_ANGLE_LB STEERING_CHASSIS_ALIGN_ECD_LB / 8192.f * 360.f // 舵轮 B 对齐角度
