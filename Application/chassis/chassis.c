@@ -108,6 +108,7 @@ void ChassisInit()
                 .IntegralLimit     = 1000,
                 .MaxOut            = 4000,
                 .Derivative_LPF_RC = 0.001,
+                .DeadBand          = 5,
             },
             .speed_PID = {
                 .Kp            = 38,
@@ -187,6 +188,13 @@ void ChassisInit()
 #endif // ONE_BOARD
 }
 
+static void SteeringWheelRotateHandle()
+{
+    if (fabsf(chassis_cmd_recv.vx) > 0 || fabsf(chassis_cmd_recv.vy) > 0) {
+        chassis_cmd_recv.wz = 0;
+    }
+}
+
 /**
  * @brief 使舵电机角度最小旋转，取优弧，防止电机旋转不必要的行程
  *          例如：上次角度为0，目标角度为135度，
@@ -197,7 +205,8 @@ void ChassisInit()
  * @param last_angle 上次角度
  *
  */
-static void MinmizeRotation(float *angle, const float *last_angle, float *speed)
+static void
+MinmizeRotation(float *angle, const float *last_angle, float *speed)
 {
     float rotation = *angle - *last_angle;
     ANGLE_LIMIT_360_TO_180_ABS(rotation);
@@ -394,6 +403,7 @@ void ChassisTask()
     // chassis_cmd_recv.wz           = test_wz;
     // chassis_cmd_recv.offset_angle = test_angle;
     /* test code end in here */
+    SteeringWheelRotateHandle();
 
     if (chassis_cmd_recv.chassis_mode == CHASSIS_ZERO_FORCE) { // 如果出现重要模块离线或遥控器设置为急停,让电机停止
         DJIMotorStop(motor_lf);

@@ -282,31 +282,30 @@ static void RemoteMouseKeySet(void)
     gimbal_cmd_send.gimbal_mode     = GIMBAL_GYRO_MODE;
     chassis_cmd_send.super_cap_mode = SUPER_CAP_ON;
 
-    switch (rc_data[TEMP].key_count[KEY_PRESS][Key_C] % 3) {
+    switch (rc_data[TEMP].key_count[KEY_PRESS][Key_C] % 2) {
         case 0:
             chassis_speed_buff              = 0.8f;
             chassis_cmd_send.chassis_mode   = CHASSIS_SLOW;
             chassis_cmd_send.super_cap_mode = SUPER_CAP_OFF;
             break;
-        case 1:
+        default:
             chassis_speed_buff              = 1.2f;
             chassis_cmd_send.chassis_mode   = CHASSIS_MEDIUM;
-            chassis_cmd_send.super_cap_mode = SUPER_CAP_ON;
-            break;
-        default:
-        case 2:
-            chassis_speed_buff = 6.8f;
-            // chassis_cmd_send.chassis_mode   = CHASSIS_FAST;
-            chassis_cmd_send.chassis_mode   = CHASSIS_FOLLOW_GIMBAL_YAW;
             chassis_cmd_send.super_cap_mode = SUPER_CAP_FORCE_ON;
             break;
+    }
+
+    if (rc_data[TEMP].key[KEY_PRESS].x) {
+        chassis_speed_buff              = 0.8f;
+        chassis_cmd_send.chassis_mode   = CHASSIS_FOLLOW_GIMBAL_YAW;
+        chassis_cmd_send.super_cap_mode = SUPER_CAP_FORCE_ON;
     }
 
     // 若在底盘跟随云台模式下按住shift键，则强制改为小陀螺模式
     if (rc_data[TEMP].key[KEY_PRESS].shift && chassis_cmd_send.chassis_mode == CHASSIS_FOLLOW_GIMBAL_YAW) {
         chassis_speed_buff              = 1.2f;
         chassis_cmd_send.chassis_mode   = CHASSIS_MEDIUM;
-        chassis_cmd_send.super_cap_mode = SUPER_CAP_ON;
+        chassis_cmd_send.super_cap_mode = SUPER_CAP_FORCE_ON;
     }
 
     // chassis_cmd_send.vx = (video_data[TEMP].key[KEY_PRESS].w - video_data[TEMP].key[KEY_PRESS].s) * 35000 * chassis_speed_buff; // 系数待测
@@ -385,6 +384,12 @@ static void RemoteMouseKeySet(void)
             break;
     }
 
+    if (rc_data[TEMP].mouse.z != 0) {
+        VisionSetReset(1);
+    }else{
+        VisionSetReset(0);
+    }
+
     if (vision_ctrl->is_tracking) {
         if (vision_ctrl->is_shooting) {
             chassis_cmd_send.vision_mode = LOCK;
@@ -459,7 +464,7 @@ static void RemoteMouseKeySet(void)
     switch (rc_data[TEMP].key_count[KEY_PRESS][Key_E] % 2) {
         case 0:
             chassis_cmd_send.vision_is_shoot = IS_SHOOTING_ON;
-            if (vision_ctrl->is_shooting == 0) {
+            if (vision_ctrl->is_shooting == 0 && vision_ctrl->is_tracking == 1) {
                 shoot_cmd_send.load_mode = LOAD_STOP;
             }
             break;
@@ -519,31 +524,30 @@ static void MouseKeySet(void)
     //         break; // 当按下激活键时,继续执行
     // }
 
-    switch (video_data[TEMP].key_count[KEY_PRESS][Key_C] % 3) {
+    switch (video_data[TEMP].key_count[KEY_PRESS][Key_C] % 2) {
         case 0:
             chassis_speed_buff              = 0.8f;
             chassis_cmd_send.chassis_mode   = CHASSIS_SLOW;
             chassis_cmd_send.super_cap_mode = SUPER_CAP_OFF;
             break;
-        case 1:
+        default:
             chassis_speed_buff              = 1.2f;
             chassis_cmd_send.chassis_mode   = CHASSIS_MEDIUM;
-            chassis_cmd_send.super_cap_mode = SUPER_CAP_ON;
-            break;
-        default:
-        case 2:
-            chassis_speed_buff = 6.8f;
-            // chassis_cmd_send.chassis_mode   = CHASSIS_FAST;
-            chassis_cmd_send.chassis_mode   = CHASSIS_FOLLOW_GIMBAL_YAW;
             chassis_cmd_send.super_cap_mode = SUPER_CAP_FORCE_ON;
             break;
+    }
+
+    if (video_data[TEMP].key[KEY_PRESS].x) {
+        chassis_speed_buff              = 0.8f;
+        chassis_cmd_send.chassis_mode   = CHASSIS_FOLLOW_GIMBAL_YAW;
+        chassis_cmd_send.super_cap_mode = SUPER_CAP_FORCE_ON;
     }
 
     // 若在底盘跟随云台模式下按住shift键，则强制改为小陀螺模式
     if (video_data[TEMP].key[KEY_PRESS].shift && chassis_cmd_send.chassis_mode == CHASSIS_FOLLOW_GIMBAL_YAW) {
         chassis_speed_buff              = 1.2f;
         chassis_cmd_send.chassis_mode   = CHASSIS_MEDIUM;
-        chassis_cmd_send.super_cap_mode = SUPER_CAP_ON;
+        chassis_cmd_send.super_cap_mode = SUPER_CAP_FORCE_ON;
     }
 
     // chassis_cmd_send.vx = (video_data[TEMP].key[KEY_PRESS].w - video_data[TEMP].key[KEY_PRESS].s) * 35000 * chassis_speed_buff; // 系数待测
@@ -626,6 +630,12 @@ static void MouseKeySet(void)
             break;
     }
 
+    if (video_data->key_data.mouse_z != 0){
+        VisionSetReset(1);
+    } else {
+        VisionSetReset(0);
+    }
+
     if (vision_ctrl->is_tracking) {
         if (vision_ctrl->is_shooting) {
             chassis_cmd_send.vision_mode = LOCK;
@@ -700,7 +710,7 @@ static void MouseKeySet(void)
     switch (video_data[TEMP].key_count[KEY_PRESS][Key_E] % 2) {
         case 0:
             chassis_cmd_send.vision_is_shoot = IS_SHOOTING_ON;
-            if (vision_ctrl->is_shooting == 0) {
+            if (vision_ctrl->is_shooting == 0 && vision_ctrl->is_tracking == 1) {
                 shoot_cmd_send.load_mode = LOAD_STOP;
             }
             break;

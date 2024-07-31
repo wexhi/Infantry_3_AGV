@@ -123,6 +123,11 @@ void VisionSetDetectColor(Self_Color_e self_color)
     vision_instance->send_data->detect_color = detect_color;
 }
 
+void VisionSetReset(uint8_t is_reset)
+{
+    vision_instance->send_data->is_reset = is_reset;
+}
+
 /**
  * @brief 发送数据处理函数
  *
@@ -136,15 +141,16 @@ static void SendProcess(Vision_Send_s *send, uint8_t *tx_buff)
     tx_buff[0] = send->header;
     tx_buff[1] = send->is_energy_mode;
     tx_buff[2] = send->detect_color;
+    tx_buff[3] = send->is_reset;
     // tx_buff[3] = send->reset_tracker;
     // tx_buff[4] = 1;
 
     /* 使用memcpy发送浮点型小数 */
-    memcpy(&tx_buff[3], &send->roll, 4);
-    memcpy(&tx_buff[7], &send->yaw, 4);
-    memcpy(&tx_buff[11], &send->pitch, 4);
-    memcpy(&tx_buff[15], &send->bullet_speed, 4);
-    memcpy(&tx_buff[19], &send->yaw_speed, 4);
+    memcpy(&tx_buff[4], &send->roll, 4);
+    memcpy(&tx_buff[8], &send->yaw, 4);
+    memcpy(&tx_buff[12], &send->pitch, 4);
+    memcpy(&tx_buff[16], &send->bullet_speed, 4);
+    memcpy(&tx_buff[20], &send->yaw_speed, 4);
 
     /* 发送校验位 */
     send->checksum = Get_CRC16_Check_Sum(&tx_buff[0], VISION_SEND_SIZE - 3u, CRC_INIT);

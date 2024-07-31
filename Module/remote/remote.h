@@ -49,6 +49,7 @@ typedef struct
     {
         int16_t x;
         int16_t y;
+        int16_t z;
         uint8_t press_l;
         uint8_t press_r;
     } mouse;

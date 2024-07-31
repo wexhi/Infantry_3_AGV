@@ -20,7 +20,7 @@
 #define VISION_SEND_TAIL   0xAAu // 视觉发送数据帧尾
 
 #define VISION_RECV_SIZE   17u // 当前为固定值,12字节
-#define VISION_SEND_SIZE   26u
+#define VISION_SEND_SIZE   27u
 
 // #pragma pack(1) // 1字节对齐
 
@@ -104,6 +104,7 @@ typedef struct
     uint8_t header;
     uint8_t is_energy_mode; // 0-瞄准装甲板，1-瞄准能量机关
     uint8_t detect_color;   // 5-red 6-blue 发1
+    uint8_t is_reset;        // 是否重置目标
     float roll;             // rad
     float yaw;              // rad
     float pitch;            //
@@ -172,5 +173,7 @@ void VisionSetEnergy(uint8_t is_energy_mode);
  * @param detect_color 5-红色，6-蓝色
  */
 void VisionSetDetectColor(Self_Color_e self_color);
+
+void VisionSetReset(uint8_t is_reset);
 
 #endif // MINIPC_PROCESS_H

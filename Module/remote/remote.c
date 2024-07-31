@@ -115,6 +115,7 @@ static void sbus_to_rc(const uint8_t *sbus_buf)
     // 鼠标解析
     rc_ctrl[TEMP].mouse.x       = (sbus_buf[6] | (sbus_buf[7] << 8)); //!< Mouse X axis
     rc_ctrl[TEMP].mouse.y       = (sbus_buf[8] | (sbus_buf[9] << 8)); //!< Mouse Y axis
+    rc_ctrl[TEMP].mouse.z       = (sbus_buf[10] | (sbus_buf[11] << 8)); //!< Mouse Z axis   // 滚轮
     rc_ctrl[TEMP].mouse.press_l = sbus_buf[12];                       //!< Mouse Left Is Press ?
     rc_ctrl[TEMP].mouse.press_r = sbus_buf[13];                       //!< Mouse Right Is Press ?
 
