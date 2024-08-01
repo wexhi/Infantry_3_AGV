@@ -32,7 +32,7 @@
 #define CHASSIS_VY_MAX      25000.f                                      // 底盘最大速度
 #define CHASSIS_WZ_MAX      300.f                                        // 底盘最大速度
 #define SPEED_UP_RATE       80.f                                         // 底盘加速度
-#define SPEED_DOWN_RATE     160.f                                        // 底盘减速度
+#define SPEED_DOWN_RATE     200.f                                        // 底盘减速度
 // 对双板的兼容,条件编译
 #ifdef GIMBAL_BOARD
 #include "C_comm.h"
@@ -282,33 +282,37 @@ static void RemoteMouseKeySet(void)
     gimbal_cmd_send.gimbal_mode     = GIMBAL_GYRO_MODE;
     chassis_cmd_send.super_cap_mode = SUPER_CAP_ON;
 
-    switch (rc_data[TEMP].key_count[KEY_PRESS][Key_C] % 3) {
+    switch (rc_data[TEMP].key_count[KEY_PRESS][Key_C] % 2) {
         case 0:
-            chassis_speed_buff              = 0.8f;
+            chassis_speed_buff              = 3.f;
             chassis_cmd_send.chassis_mode   = CHASSIS_SLOW;
             chassis_cmd_send.super_cap_mode = SUPER_CAP_OFF;
             break;
-        case 1:
-            chassis_speed_buff              = 7.f;
-            chassis_cmd_send.chassis_mode   = CHASSIS_FOLLOW_GIMBAL_YAW;
-            chassis_cmd_send.super_cap_mode = SUPER_CAP_FORCE_ON;
-            break;
+        // case 1:
+        //     chassis_speed_buff              = 7.f;
+        //     chassis_cmd_send.chassis_mode   = CHASSIS_FOLLOW_GIMBAL_YAW;
+        //     chassis_cmd_send.super_cap_mode = SUPER_CAP_FORCE_ON;
+        //     break;
         default:
-            chassis_speed_buff              = 1.2f;
+            chassis_speed_buff              = 3.f;
             chassis_cmd_send.chassis_mode   = CHASSIS_MEDIUM;
-            chassis_cmd_send.super_cap_mode = SUPER_CAP_FORCE_ON;
+            chassis_cmd_send.super_cap_mode = SUPER_CAP_ON;
             break;
     }
 
-    if (rc_data[TEMP].key[KEY_PRESS].x) {
-        chassis_speed_buff              = 0.8f;
-        chassis_cmd_send.chassis_mode   = CHASSIS_FOLLOW_GIMBAL_YAW;
-        chassis_cmd_send.super_cap_mode = SUPER_CAP_FORCE_ON;
+    switch (rc_data[TEMP].key_count[KEY_PRESS][Key_X] % 2) {
+        case 0:
+            break;
+        default:
+            chassis_speed_buff              = 3.f;
+            chassis_cmd_send.chassis_mode   = CHASSIS_FOLLOW_GIMBAL_YAW;
+            chassis_cmd_send.super_cap_mode = SUPER_CAP_ON;
+            break;
     }
 
     // 若在底盘跟随云台模式下按住shift键，则强制改为小陀螺模式
     if (rc_data[TEMP].key[KEY_PRESS].shift && chassis_cmd_send.chassis_mode == CHASSIS_FOLLOW_GIMBAL_YAW) {
-        chassis_speed_buff              = 1.2f;
+        chassis_speed_buff              = 3.f;
         chassis_cmd_send.chassis_mode   = CHASSIS_MEDIUM;
         chassis_cmd_send.super_cap_mode = SUPER_CAP_FORCE_ON;
     }
@@ -529,33 +533,37 @@ static void MouseKeySet(void)
     //         break; // 当按下激活键时,继续执行
     // }
 
-    switch (video_data[TEMP].key_count[KEY_PRESS][Key_C] % 3) {
+    switch (video_data[TEMP].key_count[KEY_PRESS][Key_C] % 2) {
         case 0:
-            chassis_speed_buff              = 0.8f;
+            chassis_speed_buff              = 3.f;
             chassis_cmd_send.chassis_mode   = CHASSIS_SLOW;
             chassis_cmd_send.super_cap_mode = SUPER_CAP_OFF;
             break;
-        case 1:
-            chassis_speed_buff              = 7.f;
-            chassis_cmd_send.chassis_mode   = CHASSIS_FOLLOW_GIMBAL_YAW;
-            chassis_cmd_send.super_cap_mode = SUPER_CAP_FORCE_ON;
-            break;
+            // case 1:
+            //     chassis_speed_buff              = 7.f;
+            //     chassis_cmd_send.chassis_mode   = CHASSIS_FOLLOW_GIMBAL_YAW;
+            //     chassis_cmd_send.super_cap_mode = SUPER_CAP_FORCE_ON;
+            // break;
         default:
-            chassis_speed_buff              = 1.2f;
+            chassis_speed_buff              = 3.f;
             chassis_cmd_send.chassis_mode   = CHASSIS_MEDIUM;
-            chassis_cmd_send.super_cap_mode = SUPER_CAP_FORCE_ON;
+            chassis_cmd_send.super_cap_mode = SUPER_CAP_ON;
             break;
     }
 
-    if (video_data[TEMP].key[KEY_PRESS].x) {
-        chassis_speed_buff              = 0.8f;
-        chassis_cmd_send.chassis_mode   = CHASSIS_FOLLOW_GIMBAL_YAW;
-        chassis_cmd_send.super_cap_mode = SUPER_CAP_FORCE_ON;
+    switch (video_data[TEMP].key_count[KEY_PRESS][Key_X] % 2) {
+        case 0:
+            break;
+        default:
+            chassis_speed_buff              = 3.f;
+            chassis_cmd_send.chassis_mode   = CHASSIS_FOLLOW_GIMBAL_YAW;
+            chassis_cmd_send.super_cap_mode = SUPER_CAP_ON;
+            break;
     }
 
     // 若在底盘跟随云台模式下按住shift键，则强制改为小陀螺模式
     if (video_data[TEMP].key[KEY_PRESS].shift && chassis_cmd_send.chassis_mode == CHASSIS_FOLLOW_GIMBAL_YAW) {
-        chassis_speed_buff              = 1.2f;
+        chassis_speed_buff              = 3.f;
         chassis_cmd_send.chassis_mode   = CHASSIS_MEDIUM;
         chassis_cmd_send.super_cap_mode = SUPER_CAP_FORCE_ON;
     }

@@ -18,8 +18,8 @@
 #pragma pack(1)
 typedef struct
 {
-    uint16_t voltage; // 电压
-    uint16_t power;   // 功率
+    float voltage; // 电压
+    float power;   // 功率
     uint8_t status;   // 状态
 } SuperCapData_t;
 
