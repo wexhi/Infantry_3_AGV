@@ -108,7 +108,7 @@ void ChassisInit()
                 .IntegralLimit     = 1000,
                 .MaxOut            = 4000,
                 .Derivative_LPF_RC = 0.001,
-                .DeadBand          = 5,
+                .DeadBand          = 3,
             },
             .speed_PID = {
                 .Kp            = 38,
@@ -116,7 +116,7 @@ void ChassisInit()
                 .Kd            = 0,
                 .Improve       = PID_Integral_Limit | PID_Derivative_On_Measurement | PID_ChangingIntegrationRate | PID_OutputFilter,
                 .IntegralLimit = 4000,
-                .MaxOut        = 8000,
+                .MaxOut        = 20000,
                 .Output_LPF_RC = 0.03,
             },
         },

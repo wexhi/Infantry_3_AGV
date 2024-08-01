@@ -31,7 +31,7 @@
 #define CHASSIS_VX_MAX      25000.f                                      // 底盘最大速度
 #define CHASSIS_VY_MAX      25000.f                                      // 底盘最大速度
 #define CHASSIS_WZ_MAX      300.f                                        // 底盘最大速度
-#define SPEED_UP_RATE       50.f                                         // 底盘加速度
+#define SPEED_UP_RATE       80.f                                         // 底盘加速度
 #define SPEED_DOWN_RATE     160.f                                        // 底盘减速度
 // 对双板的兼容,条件编译
 #ifdef GIMBAL_BOARD
@@ -282,11 +282,16 @@ static void RemoteMouseKeySet(void)
     gimbal_cmd_send.gimbal_mode     = GIMBAL_GYRO_MODE;
     chassis_cmd_send.super_cap_mode = SUPER_CAP_ON;
 
-    switch (rc_data[TEMP].key_count[KEY_PRESS][Key_C] % 2) {
+    switch (rc_data[TEMP].key_count[KEY_PRESS][Key_C] % 3) {
         case 0:
             chassis_speed_buff              = 0.8f;
             chassis_cmd_send.chassis_mode   = CHASSIS_SLOW;
             chassis_cmd_send.super_cap_mode = SUPER_CAP_OFF;
+            break;
+        case 1:
+            chassis_speed_buff              = 7.f;
+            chassis_cmd_send.chassis_mode   = CHASSIS_FOLLOW_GIMBAL_YAW;
+            chassis_cmd_send.super_cap_mode = SUPER_CAP_FORCE_ON;
             break;
         default:
             chassis_speed_buff              = 1.2f;
@@ -386,7 +391,7 @@ static void RemoteMouseKeySet(void)
 
     if (rc_data[TEMP].mouse.z != 0) {
         VisionSetReset(1);
-    }else{
+    } else {
         VisionSetReset(0);
     }
 
@@ -524,11 +529,16 @@ static void MouseKeySet(void)
     //         break; // 当按下激活键时,继续执行
     // }
 
-    switch (video_data[TEMP].key_count[KEY_PRESS][Key_C] % 2) {
+    switch (video_data[TEMP].key_count[KEY_PRESS][Key_C] % 3) {
         case 0:
             chassis_speed_buff              = 0.8f;
             chassis_cmd_send.chassis_mode   = CHASSIS_SLOW;
             chassis_cmd_send.super_cap_mode = SUPER_CAP_OFF;
+            break;
+        case 1:
+            chassis_speed_buff              = 7.f;
+            chassis_cmd_send.chassis_mode   = CHASSIS_FOLLOW_GIMBAL_YAW;
+            chassis_cmd_send.super_cap_mode = SUPER_CAP_FORCE_ON;
             break;
         default:
             chassis_speed_buff              = 1.2f;
@@ -555,11 +565,7 @@ static void MouseKeySet(void)
     // chassis_cmd_send.wz = video_data[TEMP].key[KEY_PRESS].shift * 1000 * chassis_speed_buff;
 
     if (video_data[TEMP].key[KEY_PRESS].w) {
-        if (chassis_cmd_send.chassis_mode == CHASSIS_FOLLOW_GIMBAL_YAW) {
-            forward_speed += 5 * SPEED_UP_RATE;
-        } else {
-            forward_speed += SPEED_UP_RATE;
-        }
+        forward_speed += SPEED_UP_RATE;
     } else {
         if (forward_speed > CHASSIS_VX_MAX / 4) {
             forward_speed -= SPEED_DOWN_RATE * 4;
@@ -630,7 +636,7 @@ static void MouseKeySet(void)
             break;
     }
 
-    if (video_data->key_data.mouse_z != 0){
+    if (video_data->key_data.mouse_z != 0) {
         VisionSetReset(1);
     } else {
         VisionSetReset(0);
