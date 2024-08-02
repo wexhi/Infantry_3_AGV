@@ -61,7 +61,7 @@ void ChassisInit()
                 .MaxOut        = 40000,
             },
             .current_PID = {
-                .Kp            = 0.7, // 0.4
+                .Kp            = 0.8, // 0.4
                 .Ki            = 0,   // 0
                 .Kd            = 0,
                 .IntegralLimit = 3000,
@@ -99,19 +99,19 @@ void ChassisInit()
         .can_init_config.can_handle   = &hcan2,
         .controller_param_init_config = {
             .angle_PID = {
-                .Kp                = 8,
-                .Ki                = 1,
+                .Kp                = 12,
+                .Ki                = 0.2,
                 .Kd                = 0,
-                .CoefA             = 0.3,
-                .CoefB             = 0.4,
+                .CoefA             = 3,
+                .CoefB             = 0.1,
                 .Improve           = PID_Trapezoid_Intergral | PID_Integral_Limit | PID_Derivative_On_Measurement | PID_DerivativeFilter | PID_ChangingIntegrationRate,
                 .IntegralLimit     = 1000,
-                .MaxOut            = 4000,
+                .MaxOut            = 5000,
                 .Derivative_LPF_RC = 0.001,
-                .DeadBand          = 3,
+                .DeadBand          = 0.5,
             },
             .speed_PID = {
-                .Kp            = 38,
+                .Kp            = 40,
                 .Ki            = 3,
                 .Kd            = 0,
                 .Improve       = PID_Integral_Limit | PID_Derivative_On_Measurement | PID_ChangingIntegrationRate | PID_OutputFilter,
@@ -340,7 +340,8 @@ static void LimitChassisOutput()
             if (chassis_power_buffer >= 55) {
                 P_limit = 1;
             } else {
-                P_limit = chassis_power_buffer / 55.f;
+                // P_limit = chassis_power_buffer / 55.f;
+                P_limit = pow(1.0f - (60.0f - chassis_power_buffer) / 60.0f, 0.45);
             }
         } else {
             chassis_cmd_recv.super_cap_mode = SUPER_CAP_ON;
@@ -461,7 +462,8 @@ void ChassisTask()
     chassis_feedback_data.shoot_limit  = referee_data->GameRobotState.shooter_barrel_heat_limit;
     chassis_feedback_data.bullet_speed = referee_data->ShootData.bullet_speed;
     // 我方颜色id小于10是红色,大于10是蓝色,注意这里发送的是自己的颜色, 1:blue , 2:red
-    chassis_feedback_data.self_color = referee_data->GameRobotState.robot_id > 10 ? COLOR_BLUE : COLOR_RED;
+    chassis_feedback_data.self_color  = referee_data->GameRobotState.robot_id > 10 ? COLOR_BLUE : COLOR_RED;
+    chassis_feedback_data.robot_level = referee_data->GameRobotState.robot_level;
 
     ui_data.ui_mode          = chassis_cmd_recv.ui_mode;
     ui_data.chassis_mode     = chassis_cmd_recv.chassis_mode;

@@ -30,8 +30,8 @@
 #define PTICH_HORIZON_ANGLE (PITCH_HORIZON_ECD * ECD_ANGLE_COEF_DJI)     // pitch水平时电机的角度,0-360
 #define CHASSIS_VX_MAX      25000.f                                      // 底盘最大速度
 #define CHASSIS_VY_MAX      25000.f                                      // 底盘最大速度
-#define CHASSIS_WZ_MAX      300.f                                        // 底盘最大速度
-#define SPEED_UP_RATE       80.f                                         // 底盘加速度
+#define CHASSIS_WZ_MAX      400.f                                        // 底盘最大速度
+#define SPEED_UP_RATE       40.f                                         // 底盘加速度
 #define SPEED_DOWN_RATE     200.f                                        // 底盘减速度
 // 对双板的兼容,条件编译
 #ifdef GIMBAL_BOARD
@@ -65,6 +65,15 @@ static Shoot_Ctrl_Cmd_s shoot_cmd_send;      // 传递给发射的控制信息
 static Shoot_Upload_Data_s shoot_fetch_data; // 从发射获取的反馈信息
 static float forward_speed, back_speed, left_speed, right_speed;
 static float chassis_speed_buff;
+// 羽毛球场数据
+//  static float chassis_speed_normal[10] = {1.7f, 1.7f, 1.7f, 1.9f, 1.9f, 1.9f, 2.1f, 2.1f, 2.1f, 2.1f};
+//  static float chassis_speed_supcap[10] = {1.3f, 1.3f, 1.3f, 1.5f, 1.5f, 1.5f, 1.7f, 1.7f, 1.7f, 1.7f};
+// 赛场保守数据数据
+static float chassis_speed_normal_test[10] = {1.5f, 1.5f, 1.5f, 1.7f, 1.7f, 1.7f, 1.9f, 1.9f, 1.9f, 1.9f};
+static float chassis_speed_supcap_test[10] = {1.1f, 1.1f, 1.1f, 1.3f, 1.3f, 1.3f, 1.5f, 1.5f, 1.5f, 1.5f};
+static float chassis_speed_conser[10]      = {1.f, 1.f, 1.1f, 1.1f, 1.2f, 1.2f, 1.3f, 1.3f, 1.4f, 1.4f};
+static float chassis_speed_normal[10]      = {0};
+static float chassis_speed_supcap[10]      = {0};
 static void RemoteControlSet(void);  // 遥控器控制量设置
 static void MouseKeySet(void);       // 图传链路控制量设置
 static void RemoteMouseKeySet(void); // 通过遥控器的键鼠控制
@@ -238,9 +247,9 @@ static void RemoteControlSet(void)
 
     // 底盘参数,目前没有加入小陀螺(调试似乎暂时没有必要),系数需要调整
     // max 70.f,参数过大会达到电机的峰值速度，导致底盘漂移等问题，且毫无意义
-    chassis_cmd_send.vx = 100.0f * (float)rc_data[TEMP].rc.rocker_l1; // 1水平方向
-    chassis_cmd_send.vy = 100.0f * (float)rc_data[TEMP].rc.rocker_l_; // _竖直方向
-    chassis_cmd_send.wz = -1.0f * (float)rc_data[TEMP].rc.dial;
+    chassis_cmd_send.vx = 40.0f * (float)rc_data[TEMP].rc.rocker_l1; // 1水平方向
+    chassis_cmd_send.vy = 40.0f * (float)rc_data[TEMP].rc.rocker_l_; // _竖直方向
+    chassis_cmd_send.wz = -0.6f * (float)rc_data[TEMP].rc.dial;
 
     // 发射参数
     if (switch_is_down(rc_data[TEMP].rc.switch_left)) // 左侧开关状态[上],弹舱打开
@@ -269,22 +278,30 @@ static void RemoteControlSet(void)
 
 static void RemoteMouseKeySet(void)
 {
-    // switch (video_data[TEMP].key_count[V_KEY_PRESS_WITH_CTRL][V_Key_X] % 2) {
-    //     case 0:
-    //         EmergencyHandler();
-    //         return; // 当没有按下激活键时,直接返回
-    //     default:
-    //         break; // 当按下激活键时,继续执行
-    // }
+    switch (rc_data[TEMP].key_count[KEY_PRESS_WITH_CTRL][Key_V] % 2) {
+        case 1:
+            EmergencyHandler();
+            return; // 当没有按下激活键时,直接返回
+        default:
+            break; // 当按下激活键时,继续执行
+    }
     robot_state                     = ROBOT_READY;
     shoot_cmd_send.shoot_mode       = SHOOT_ON;
     chassis_cmd_send.chassis_mode   = CHASSIS_SLOW; // 底盘模式
     gimbal_cmd_send.gimbal_mode     = GIMBAL_GYRO_MODE;
     chassis_cmd_send.super_cap_mode = SUPER_CAP_ON;
 
+    if (rc_data[TEMP].key_count[KEY_PRESS_WITH_CTRL][Key_Z] % 2 == 1) {
+        memcpy(&chassis_speed_normal, &chassis_speed_normal_test, sizeof(chassis_speed_normal));
+        memcpy(&chassis_speed_supcap, &chassis_speed_supcap_test, sizeof(chassis_speed_supcap));
+    } else {
+        memcpy(&chassis_speed_normal, &chassis_speed_conser, sizeof(chassis_speed_normal));
+        memcpy(&chassis_speed_supcap, &chassis_speed_conser, sizeof(chassis_speed_supcap));
+    }
+
     switch (rc_data[TEMP].key_count[KEY_PRESS][Key_C] % 2) {
         case 0:
-            chassis_speed_buff              = 3.f;
+            chassis_speed_buff              = chassis_speed_normal[chassis_fetch_data.robot_level - 1];
             chassis_cmd_send.chassis_mode   = CHASSIS_SLOW;
             chassis_cmd_send.super_cap_mode = SUPER_CAP_OFF;
             break;
@@ -294,7 +311,7 @@ static void RemoteMouseKeySet(void)
         //     chassis_cmd_send.super_cap_mode = SUPER_CAP_FORCE_ON;
         //     break;
         default:
-            chassis_speed_buff              = 3.f;
+            chassis_speed_buff              = chassis_speed_supcap[chassis_fetch_data.robot_level - 1];
             chassis_cmd_send.chassis_mode   = CHASSIS_MEDIUM;
             chassis_cmd_send.super_cap_mode = SUPER_CAP_ON;
             break;
@@ -304,7 +321,7 @@ static void RemoteMouseKeySet(void)
         case 0:
             break;
         default:
-            chassis_speed_buff              = 3.f;
+            chassis_speed_buff              = chassis_speed_supcap[chassis_fetch_data.robot_level - 1];
             chassis_cmd_send.chassis_mode   = CHASSIS_FOLLOW_GIMBAL_YAW;
             chassis_cmd_send.super_cap_mode = SUPER_CAP_ON;
             break;
@@ -312,7 +329,7 @@ static void RemoteMouseKeySet(void)
 
     // 若在底盘跟随云台模式下按住shift键，则强制改为小陀螺模式
     if (rc_data[TEMP].key[KEY_PRESS].shift && chassis_cmd_send.chassis_mode == CHASSIS_FOLLOW_GIMBAL_YAW) {
-        chassis_speed_buff              = 3.f;
+        chassis_speed_buff              = chassis_speed_supcap[chassis_fetch_data.robot_level - 1];
         chassis_cmd_send.chassis_mode   = CHASSIS_MEDIUM;
         chassis_cmd_send.super_cap_mode = SUPER_CAP_FORCE_ON;
     }
@@ -533,9 +550,19 @@ static void MouseKeySet(void)
     //         break; // 当按下激活键时,继续执行
     // }
 
+    if (video_data[TEMP].key_count[KEY_PRESS_WITH_CTRL][Key_Z] % 2 == 1) {
+        memcpy(&chassis_speed_normal, &chassis_speed_normal_test, sizeof(chassis_speed_normal));
+        memcpy(&chassis_speed_supcap, &chassis_speed_supcap_test, sizeof(chassis_speed_supcap));
+
+    } else {
+        memcpy(&chassis_speed_normal, &chassis_speed_conser, sizeof(chassis_speed_normal));
+        memcpy(&chassis_speed_supcap, &chassis_speed_conser, sizeof(chassis_speed_supcap));
+
+    }
+
     switch (video_data[TEMP].key_count[KEY_PRESS][Key_C] % 2) {
         case 0:
-            chassis_speed_buff              = 3.f;
+            chassis_speed_buff              = chassis_speed_normal[chassis_fetch_data.robot_level - 1];
             chassis_cmd_send.chassis_mode   = CHASSIS_SLOW;
             chassis_cmd_send.super_cap_mode = SUPER_CAP_OFF;
             break;
@@ -545,7 +572,7 @@ static void MouseKeySet(void)
             //     chassis_cmd_send.super_cap_mode = SUPER_CAP_FORCE_ON;
             // break;
         default:
-            chassis_speed_buff              = 3.f;
+            chassis_speed_buff              = chassis_speed_supcap[chassis_fetch_data.robot_level - 1];
             chassis_cmd_send.chassis_mode   = CHASSIS_MEDIUM;
             chassis_cmd_send.super_cap_mode = SUPER_CAP_ON;
             break;
@@ -555,7 +582,7 @@ static void MouseKeySet(void)
         case 0:
             break;
         default:
-            chassis_speed_buff              = 3.f;
+            chassis_speed_buff              = chassis_speed_supcap[chassis_fetch_data.robot_level - 1];
             chassis_cmd_send.chassis_mode   = CHASSIS_FOLLOW_GIMBAL_YAW;
             chassis_cmd_send.super_cap_mode = SUPER_CAP_ON;
             break;
@@ -563,7 +590,7 @@ static void MouseKeySet(void)
 
     // 若在底盘跟随云台模式下按住shift键，则强制改为小陀螺模式
     if (video_data[TEMP].key[KEY_PRESS].shift && chassis_cmd_send.chassis_mode == CHASSIS_FOLLOW_GIMBAL_YAW) {
-        chassis_speed_buff              = 3.f;
+        chassis_speed_buff              = chassis_speed_supcap[chassis_fetch_data.robot_level - 1];
         chassis_cmd_send.chassis_mode   = CHASSIS_MEDIUM;
         chassis_cmd_send.super_cap_mode = SUPER_CAP_FORCE_ON;
     }

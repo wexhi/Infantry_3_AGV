@@ -18,8 +18,8 @@
 
 /* 开发板类型定义,烧录时注意不要弄错对应功能;修改定义后需要重新编译,只能存在一个定义! */
 // #define ONE_BOARD // ! 单板控制整车，beta选项，建议别选上
-// #define CHASSIS_BOARD //` 底盘板
-#define GIMBAL_BOARD // 云台板
+#define CHASSIS_BOARD //` 底盘板
+// #define GIMBAL_BOARD // 云台板4
 
 /* 机器人重要参数定义,注意根据不同机器人进行修改,浮点数需要以.0或f结尾,无符号以u结尾 */
 
@@ -45,10 +45,10 @@
 // #define CHASSIS_OMNI_WHEEL // 是否为全向轮底盘
 // #define CHASSIS_MCNAMEE_WHEEL     // 是否为麦克纳姆轮底盘
 #define CHASSIS_STEERING_WHEEL               // 是否为舵轮
-#define STEERING_CHASSIS_ALIGN_ECD_LF   7600 // 舵电机 A 编码器值，若有机械改动需要修改
-#define STEERING_CHASSIS_ALIGN_ECD_LB   4112 // 舵电机 B 编码器值，若有机械改动需要修改
-#define STEERING_CHASSIS_ALIGN_ECD_RF   3981 // 舵电机 C 编码器值，若有机械改动需要修改
-#define STEERING_CHASSIS_ALIGN_ECD_RB   3420  // 舵电机 D 编码器值，若有机械改动需要修改
+#define STEERING_CHASSIS_ALIGN_ECD_LF   6194 // 舵电机 A 编码器值，若有机械改动需要修改
+#define STEERING_CHASSIS_ALIGN_ECD_LB   170  // 舵电机 B 编码器值，若有机械改动需要修改
+#define STEERING_CHASSIS_ALIGN_ECD_RF   4022 // 舵电机 C 编码器值，若有机械改动需要修改
+#define STEERING_CHASSIS_ALIGN_ECD_RB   3343 // 舵电机 D 编码器值，若有机械改动需要修改
 
 #define STEERING_CHASSIS_ALIGN_ANGLE_LF STEERING_CHASSIS_ALIGN_ECD_LF / 8192.f * 360.f // 舵轮 A 对齐角度
 #define STEERING_CHASSIS_ALIGN_ANGLE_LB STEERING_CHASSIS_ALIGN_ECD_LB / 8192.f * 360.f // 舵轮 B 对齐角度
@@ -337,6 +337,7 @@ typedef struct
     uint16_t shoot_heat;  // 枪口热量
     uint16_t shoot_limit; // 枪口热量上限
     float bullet_speed;   // 裁判系统弹速
+    uint8_t robot_level;
     Self_Color_e self_color;
     // Gimbal_Ctrl_Cmd_s gimbal_ctrl_cmd;
     // Shoot_Ctrl_Cmd_s shoot_ctrl_cmd;

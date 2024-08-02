@@ -377,10 +377,10 @@ static void MyUIRefresh(referee_info_t *referee_recv_info, Referee_Interactive_i
     // power
     if (_Interactive_data->Referee_Interactive_Flag.Power_flag == 1) {
         UIFloatDraw(&UI_Energy[1], "sd7", UI_Graph_Change, 8, UI_Color_Green, 18, 2, 2, 750, 230, _Interactive_data->Chassis_Power_Data.chassis_power_mx * 1000);
-        if (_Interactive_data->Chassis_Power_Data.chassis_power_mx >= 12)
-            UILineDraw(&UI_Energy[2], "sd8", UI_Graph_Change, 8, UI_Color_Pink, 30, 720, 160, (uint32_t)720 + ((_Interactive_data->Chassis_Power_Data.chassis_power_mx - 12) * 50), 160);
-        else
-            UILineDraw(&UI_Energy[2], "sd8", UI_Graph_Change, 8, UI_Color_Black, 30, 720, 160, (uint32_t)720 + ((_Interactive_data->Chassis_Power_Data.chassis_power_mx - 12) * 50), 160);
+        // if (_Interactive_data->Chassis_Power_Data.chassis_power_mx >= 12)
+        UILineDraw(&UI_Energy[2], "sd8", UI_Graph_Change, 8, UI_Color_Pink, 34, 722, 160, (uint32_t)722 + ((_Interactive_data->Chassis_Power_Data.chassis_power_mx - 9) / 15 * 496), 160);
+        // else
+        //     UILineDraw(&UI_Energy[2], "sd8", UI_Graph_Change, 8, UI_Color_Black, 30, 720, 160, (uint32_t)720 + ((_Interactive_data->Chassis_Power_Data.chassis_power_mx - 12) / 15 * 496), 160);
         UIGraphRefresh(&referee_recv_info->referee_id, 2, UI_Energy[1], UI_Energy[2]);
         _Interactive_data->Referee_Interactive_Flag.Power_flag = 0;
     }
