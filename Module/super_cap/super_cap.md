@@ -2,8 +2,8 @@
  * @file super_cap.h
  * @author Bi KaiXiang (wexhi@qq.com)
  * @brief
- * @version 0.1
- * @date 2024-05-03
+ * @version 0.3
+ * @date 2024-08-30
  *
  * @copyright Copyright (c) 2024
  *
@@ -13,7 +13,7 @@
 
 ## 代码结构
 
-考虑到当前还有许多代码未使用bsp_can的框架，因此在此处还会进行drv_can的兼容，请自行查看自己代码中的板级CAN代码为bsp_can(新框架)或drv_can(老代码)
+考虑到当前还有许多代码未使用bsp_can的框架，因此在此处还会进行drv_can的兼容，请自行查看自己代码中的板级CAN代码为bsp_can(新框架)或~~drv_can(老代码)~~
 
 ## 以下为bsp_can的代码结构
 
@@ -45,6 +45,23 @@ void SuperCapSet(uint16_t buffer, uint16_t power, uint8_t state);
  *
  */
 void SuperCapSend(void);
+
+// 下为舵轮中超电所需的函数
+/**
+ * @brief 设置电机电流
+ *
+ * @param motor1_current 电机1电流
+ * @param motor2_current 电机2电流
+ * @param motor3_current 电机3电流
+ * @param motor4_current 电机4电流
+ */
+void SuperCapSetMotor(int16_t motor1_current, int16_t motor2_current, int16_t motor3_current, int16_t motor4_current);
+
+/**
+ * @brief 发送电机电流数据
+ *
+ */
+void SuperCapMotorSend(void);
 ```
 
 ## 私有函数和变量
@@ -90,9 +107,16 @@ static void SuperCapLostCallback(void *cap_ptr);
     SuperCapSend(); // 发送超级电容数据
     ```
 
-## 以下为drv_can的代码
+5. 在舵轮中，因为一条CAN线上已经挂载了8个电机，无法再挂载超级电容，因此超电需要挂在另一条CAN线上，此时超电无法读取电机电流数据，我们还需额外设置4个3508电机的电流值，并发送
 
-后续不会维护drv_can的代码，建议使用bsp_can的代码
+    ``` c
+    SuperCapSetMotor(motor_lf->measure.real_current, motor_rf->measure.real_current, motor_lb->measure.real_current, motor_rb->measure.real_current);
+    SuperCapMotorSend();
+    ```
+
+## ~~以下为drv_can的代码~~
+
+后续**不会维护**drv_can的代码，建议使用bsp_can的代码
 
 ## 发送数据
 

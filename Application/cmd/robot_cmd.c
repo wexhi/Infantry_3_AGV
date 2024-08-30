@@ -416,8 +416,8 @@ static void RemoteMouseKeySet(void)
         VisionSetReset(0);
     }
 
-    if (vision_ctrl->is_tracking) {
-        if (vision_ctrl->is_shooting) {
+    if (vision_ctrl->is_tracking) {     // 当识别到目标
+        if (vision_ctrl->is_shooting) { // 如果可以开火，设置瞄准目标的标志位，应用于UI
             chassis_cmd_send.vision_mode = LOCK;
             gimbal_cmd_send.vision_mode  = LOCK;
         } else {
@@ -557,7 +557,6 @@ static void MouseKeySet(void)
     } else {
         memcpy(&chassis_speed_normal, &chassis_speed_conser, sizeof(chassis_speed_normal));
         memcpy(&chassis_speed_supcap, &chassis_speed_conser, sizeof(chassis_speed_supcap));
-
     }
 
     switch (video_data[TEMP].key_count[KEY_PRESS][Key_C] % 2) {

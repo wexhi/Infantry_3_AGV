@@ -89,12 +89,12 @@ typedef struct
 #pragma pack(1) // 1字节对齐
 typedef struct
 {
-    uint8_t header;
-    uint8_t is_tracking;
-    uint8_t is_shooting; // 有人在眼，先别急啊
-    float yaw;
-    float pitch;
-    float distance;
+    uint8_t header;      // 帧头，0xA5u
+    uint8_t is_tracking; // 是否追踪到目标
+    uint8_t is_shooting; // 是否发射
+    float yaw;           // 目标Yaw角度
+    float pitch;         // 目标Pitch角度
+    float distance;      // 目标距离
     uint16_t checksum;
 } Vision_Recv_s;
 
@@ -104,7 +104,7 @@ typedef struct
     uint8_t header;
     uint8_t is_energy_mode; // 0-瞄准装甲板，1-瞄准能量机关
     uint8_t detect_color;   // 5-red 6-blue 发1
-    uint8_t is_reset;        // 是否重置目标
+    uint8_t is_reset;       // 是否重置目标
     float roll;             // rad
     float yaw;              // rad
     float pitch;            //

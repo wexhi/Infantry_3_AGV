@@ -2,15 +2,16 @@
  * @file VideoTransmitter.h
  * @author wexhi (wexhi@qq.com)
  * @brief  用于图传链路的接收以及解析
- * @version 1.1
- * @date 2024-05-06
- * @todo 图传链路应该属于遥控器控制的附庸，后续考虑合并或转移
+ * @version 2.1
+ * @date 2024-08-30
  *
  * @copyright Copyright (c) 2024 CQU QianLi EC 2024 all rights reserved
  *
 -->
 
 # 图传链路
+
+**注意**：图传链路在赛场上有**丢控**的可能，并且在**死亡时**会保留图传发送的**最后一帧**，出现的现象可能会导致**Yaw值**在死亡时一直**累加**，复活时头一直旋转，因此需要在死亡时进行**额外判断**
 
 ## 代码结构
 
@@ -73,7 +74,7 @@ static void VideoTransmitterLostCallback()
 3. 在需要使用图传数据的地方调用数据控制函数
 
     ``` c
-    switch (video_data[TEMPV].key_count[V_KEY_PRESS_WITH_CTRL][V_Key_X] % 2) {
+    switch (video_data[TEMP].key_count[KEY_PRESS_WITH_CTRL][Key_X] % 2) {
         case 0:
             EmergencyHandler();
             return; // 当没有按下激活键时,直接返回
@@ -85,10 +86,10 @@ static void VideoTransmitterLostCallback()
     以上只是一个例子，作用于当未按下激活键时执行紧急处理函数，按下后可以使能整车，具体功能可以根据需求自行设计，当我需要设置底盘速度或云台位置时
 
     ``` c
-    chassis_cmd_send.vx = (video_data[TEMPV].key[V_KEY_PRESS].d - video_data[TEMPV].key[KEY_PRESS].a) * 20000 * chassis_speed_buff; // 系数待测
-    chassis_cmd_send.vy = (video_data[TEMPV].key[V_KEY_PRESS].w - video_data[TEMPV].key[KEY_PRESS].s) * 20000 * chassis_speed_buff;
-    chassis_cmd_send.wz = video_data[TEMPV].key[V_KEY_PRESS].shift * 14000 * chassis_speed_buff;
+    chassis_cmd_send.vx = (video_data[TEMP].key[V_KEY_PRESS].d - video_data[TEMP].key[KEY_PRESS].a) * 20000 * chassis_speed_buff; // 系数待测
+    chassis_cmd_send.vy = (video_data[TEMP].key[V_KEY_PRESS].w - video_data[TEMP].key[KEY_PRESS].s) * 20000 * chassis_speed_buff;
+    chassis_cmd_send.wz = video_data[TEMP].key[V_KEY_PRESS].shift * 14000 * chassis_speed_buff;
 
-    gimbal_cmd_send.yaw -= (float)video_data[TEMPV].key_data.mouse_x / 660 * 2.5; // 系数待测
-    gimbal_cmd_send.pitch += (float)video_data[TEMPV].key_data.mouse_y / 660 * 2.5;
+    gimbal_cmd_send.yaw -= (float)video_data[TEMP].key_data.mouse_x / 660 * 2.5; // 系数待测
+    gimbal_cmd_send.pitch += (float)video_data[TEMP].key_data.mouse_y / 660 * 2.5;
     ```

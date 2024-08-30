@@ -23,7 +23,9 @@ static void SuperCapRxCallback(CAN_Instance *_instance)
     data->voltage          = ((float)(((uint16_t)rxbuff[0] << 8) | rxbuff[1])) / 1000.f;
     data->power            = ((float)(((uint16_t)rxbuff[2] << 8) | rxbuff[3])) / 1000.f;
     data->status           = rxbuff[4];
-    // 根据电压状态判断当前需要充电还是放电
+    // 根据电压状态判断当前需要充电还是放电,这段代码的意思是：
+    // 若我的超电从20V降到12V，那么我就开始充电，直到超电电压达到15V，我就开始放电
+    // 经测试效果没有想象中的好，可以考虑新方法
     if (data->voltage < 12 && ins->state == SUP_CAP_STATE_DISCHARGING) {
         ins->state = SUP_CAP_STATE_CHARGING;
     } else if (data->voltage > 15 && ins->state == SUP_CAP_STATE_CHARGING) {
